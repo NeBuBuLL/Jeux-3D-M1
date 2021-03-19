@@ -1,0 +1,15 @@
+body{
+    width: 100%;
+    margin: 0px;
+    padding: 0px;
+    overflow: hidden;
+}
+
+#renderCanvas {
+    width: 90%;
+    height: 90%;
+    background-color: blueviolet;
+    display: block;
+    margin: auto;
+    touch-action: none;
+}
