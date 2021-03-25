@@ -1,3 +1,8 @@
+// Page entièrement chargé, on lance le jeu
+document.addEventListener("DOMContentLoaded", function () {
+    new Game('renderCanvas');
+}, false);
+
 Game = function(canvasId) {
     // Canvas et engine défini ici
     var canvas = document.getElementById(canvasId);
@@ -6,6 +11,10 @@ Game = function(canvasId) {
     
     // On initie la scène avec une fonction associé à l'objet Game
     this.scene = this._initScene(engine);
+    
+
+    var _player = new Player(_this, canvas);
+    var _map = new Map(_this);
     
     // Permet au jeu de tourner
     engine.runRenderLoop(function () {
@@ -18,9 +27,7 @@ Game = function(canvasId) {
             engine.resize();
         }
     },false);
-
 };
-
 
 Game.prototype = {
     // Prototype d'initialisation de la scène
