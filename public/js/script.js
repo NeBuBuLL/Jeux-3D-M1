@@ -26,6 +26,7 @@ function init(){
     textureplane.diffuseTexture = new BABYLON.Texture("assets/sol.jpg",scene);
     ground.material = textureplane;
 
+
     //Permet de lancer la scene et je penses que dedans faudra lancer nos fonctions etc.. et que c'est ça qu'on avait pas bien fait
     moteur.runRenderLoop(() => {scene.render();});
 }
