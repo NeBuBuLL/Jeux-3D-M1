@@ -38,7 +38,7 @@ Map = function(game){
 function createGround(scene) {
     const groundOptions = { width:13000, height:13000, subdivisions:500, minHeight:-100, maxHeight:250, onReady: onGroundCreated};
     //scene is optional and defaults to the current scene
-    const ground = BABYLON.MeshBuilder.CreateGroundFromHeightMap("gdhm","images/hmap10.png",groundOptions, scene);
+    const ground = BABYLON.MeshBuilder.CreateGroundFromHeightMap("gdhm","images/hmap14.png",groundOptions, scene);
     //const ground = BABYLON.MeshBuilder.CreateGroundFromHeightMap("gdhm", 'images/hmap1.png', groundOptions, scene); 
 
     function onGroundCreated() {
