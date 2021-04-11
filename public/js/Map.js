@@ -27,7 +27,7 @@ Map = function(game){
     ground.material = textureplane;
  */
     createGround(scene);
-    var skybox = BABYLON.MeshBuilder.CreateBox("skyBox", {size:13000}, scene);
+    var skybox = BABYLON.MeshBuilder.CreateBox("skyBox", {size:9000}, scene);
     var skyboxMaterial = new BABYLON.StandardMaterial("skyBox", scene);
     skyboxMaterial.backFaceCulling = false;
     skyboxMaterial.reflectionTexture = new BABYLON.CubeTexture("assets/Skybox/skybox", scene);
@@ -36,16 +36,22 @@ Map = function(game){
     skybox.material = skyboxMaterial;
 };
 function createGround(scene) {
-    const groundOptions = { width:13000, height:13000, subdivisions:500, minHeight:-100, maxHeight:250, onReady: onGroundCreated};
+    const groundOptions = { width:8000, height:8000, subdivisions:500, minHeight:-100, maxHeight:250, onReady: onGroundCreated};
     //scene is optional and defaults to the current scene
     const ground = BABYLON.MeshBuilder.CreateGroundFromHeightMap("gdhm","images/hmap14.png",groundOptions, scene);
     //const ground = BABYLON.MeshBuilder.CreateGroundFromHeightMap("gdhm", 'images/hmap1.png', groundOptions, scene); 
 
     function onGroundCreated() {
+        //PBRMetallicRoughness
         const groundMaterial = new BABYLON.StandardMaterial("groundMaterial", scene);
-
-
-        groundMaterial.diffuseTexture = new BABYLON.Texture("assets/sable.jpg");
+        groundMaterial.diffuseTexture = new BABYLON.Texture("textures/test/lambert1_Base_Color.png");
+        //groundMaterial.diffuseTexture = new BABYLON.Texture("textures/test/heightmap_lambert1_Diffuse.png");
+        groundMaterial.emissiveTexture = new BABYLON.Texture("textures/test/heightmap_lambert1_Glossiness.png");
+        
+        groundMaterial.bumpTexture = new BABYLON.Texture("textures/test/heightmap_lambert1_normal.png");
+        
+        groundMaterial.roughnessTexture = new BABYLON.Texture("textures/test/lambert1_roughness.png");
+        groundMaterial.specularTexture = new BABYLON.Texture("textures/test/heightmap_lambert1_Specular.png");
         ground.material = groundMaterial;
         // to be taken into account by collision detection
         ground.checkCollisions = true;
@@ -53,6 +59,3 @@ function createGround(scene) {
     }
     return ground;
 }
-window.addEventListener("resize", () => {
-    engine.resize()
-});
