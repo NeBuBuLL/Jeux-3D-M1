@@ -72,49 +72,19 @@ function createMobs(scene){
    
     let bat = new Bat(2,"bat",3,20,5,250);
     bat.createMob(scene,"models/Persos/","bat.glb","bat");
-    /*
-    BABYLON.SceneLoader.ImportMesh("", "models/Persos/", "bat.glb", scene, function (meshes) {  
-        let bat = meshes[0];
-        bat.scaling = new BABYLON.Vector3(20, 20, 20); 
-        bat.name = "bat";
-        bat.position.x = 1040;
-        bat.position.z =2000;
-        //let crabeMob = new Mob(crabe,this.vitesse,this.attaque,this.defense,this.vie);
-    });
+    
+    let cactus = new Bat(2,"cactus",3,20,5,250);
+    cactus.createMob(scene,"models/Persos/","cactus.glb","cactus");
 
-    BABYLON.SceneLoader.ImportMesh("", "models/Persos/", "chicken.glb", scene, function (meshes) {  
-        let chicken = meshes[0];
-        chicken.scaling = new BABYLON.Vector3(20, 20, 20); 
-        chicken.name = "chicken";
-        chicken.position.x = 1080;
-        chicken.position.z =2000;
-        //let crabeMob = new Mob(crabe,this.vitesse,this.attaque,this.defense,this.vie);
-    });
+    let chicken = new Bat(2,"chicken",3,20,5,250);
+    chicken.createMob(scene,"models/Persos/","chicken.glb","chicken");
 
-    BABYLON.SceneLoader.ImportMesh("", "models/Persos/", "demon.glb", scene, function (meshes) {  
-        let demon = meshes[0];
-        demon.scaling = new BABYLON.Vector3(20, 20, 20); 
-        demon.name = "demon";
-        demon.position.x = 1120;
-        demon.position.z =2000;
-        //let crabeMob = new Mob(crabe,this.vitesse,this.attaque,this.defense,this.vie);
-    });
+    let demon = new Bat(2,"demon",3,20,5,250);
+    demon.createMob(scene,"models/Persos/","demon.glb","demon");
 
-    BABYLON.SceneLoader.ImportMesh("", "models/Persos/", "monster.glb", scene, function (meshes) {  
-        let monster = meshes[0];
-        monster.scaling = new BABYLON.Vector3(20, 20, 20); 
-        monster.name = "monster";
-        monster.position.x = 1160;
-        monster.position.z =20,00;
-        //let crabeMob = new Mob(crabe,this.vitesse,this.attaque,this.defense,this.vie);
-    });
+    let monster = new Bat(2,"monster",3,20,5,250);
+    monster.createMob(scene,"models/Persos/","monster.glb","monster");
 
-    BABYLON.SceneLoader.ImportMesh("", "models/Persos/", "tree.glb", scene, function (meshes) {  
-        let tree = meshes[0];
-        tree.scaling = new BABYLON.Vector3(20, 20, 20); 
-        tree.name = "tree";
-        tree.position.x = 1200;
-        tree.position.z =2000;
-        //let crabeMob = new Mob(crabe,this.vitesse,this.attaque,this.defense,this.vie);
-    });*/
+    let tree = new Bat(2,"tree",3,20,5,250);
+    tree.createMob(scene,"models/Persos/","tree.glb","tree");
 }
