@@ -1,9 +1,10 @@
 import Mob from "./Mob.js"
-
+import Player from "./Player.js"
 let canvas;
 let engine;
 let scene;
-let dimPlan = 300;
+let dimPlan = 8000;
+let inputStates = {};
 
 window.onload = map;
 
@@ -19,9 +20,20 @@ function map(){
 
     // Remontons le sur l'axe y de la moitié de sa hauteur
     //sphere.position.y = 1;
-    
+    let cameraset  = false ;
 
     engine.runRenderLoop(() => {
+
+
+        let player = scene.getMeshByName("Jolleen");
+        if (player){
+            if (!cameraset){
+                let followCamera = createFollowCamera(scene, player);
+                scene.activeCamera = followCamera;
+                cameraset = true;
+            }
+            player.move();
+        } 
 
         let crabe = scene.getMeshByName("crabeM");
         try{
@@ -36,11 +48,11 @@ function map(){
 
 function createScene(){
 
-    let navigationPlugin = new BABYLON.RecastJSPlugin();
-
     let scene = new BABYLON.Scene(engine);
-    let ground = createGround(scene, dimPlan, navigationPlugin);
+    let ground = createGround(scene, dimPlan);
+    
     let camera = createCamera(scene);
+   
 
     var skybox = BABYLON.MeshBuilder.CreateBox("skyBox", {size:9000}, scene);
     var skyboxMaterial = new BABYLON.StandardMaterial("skyBox", scene);
@@ -50,17 +62,38 @@ function createScene(){
     skyboxMaterial.disableLighting = true;
     skybox.material = skyboxMaterial;
 
+    var waterMesh = BABYLON.Mesh.CreateGround("sea", dimPlan*2, dimPlan*2, 32, scene, false);
+    waterMesh.diffuseColor = new BABYLON.Color3(0,0,0);
+    var water = new BABYLON.WaterMaterial("water", scene, BABYLON.Vector2(dimPlan*2,dimPlan*2));
+
+    water.bumpTexture = new BABYLON.Texture("textures/water_bump.png", scene);
+    water.windForce = -2;
+    water.waterColor = new BABYLON.Color3(0,0.5,0.5);
+    water.windDirection = new BABYLON.Vector2(1, 1);
+    water.waveHeight = 1.7;
+    water.bumpHeight = 0.8;
+    water.waveLength = 1.8;
+    waterMesh.material = water;
+    waterMesh.position.y = -95;
+    water.addToRenderList(skybox);
+    water.addToRenderList(ground);;
+
+   
     createLights(scene);
     createMobs(scene);
     
+    createPlayer(scene);
 
     return scene;  
 }
 
 function createCamera(scene){
-    let camera = new BABYLON.FreeCamera("camera", new BABYLON.Vector3(0,50,0), scene);
-    camera.setTarget(new BABYLON.Vector3(0,0,0));
-    camera.attachControl(canvas, true);
+    let camera = new BABYLON.FreeCamera("freeCamera", new BABYLON.Vector3(0, 50, 0), scene);
+    camera.attachControl(canvas);
+    // prevent camera to cross ground
+    camera.checkCollisions = true; 
+    // avoid flying with the camera
+    camera.applyGravity = true;
 
     return camera;
 }
@@ -70,44 +103,15 @@ function createLights(scene){
     light.specular = new BABYLON.Color3(0,0,0);
 }
 
-function createGround(scene, dimplan, navigationPlugin) {
-    const groundOptions = { width:dimplan, height:dimplan, subdivisions:100, minHeight:0, maxHeight:30, onReady: onGroundCreated};
+
+function createGround(scene, dimplan) {
+    const groundOptions = { width:dimplan, height:dimplan, subdivisions:500, minHeight:-100, maxHeight:250, onReady: onGroundCreated};
     //scene is optional and defaults to the current scene
-    const ground = BABYLON.MeshBuilder.CreateGroundFromHeightMap("gdhm","images/hmap17.png",groundOptions, scene);
+    const ground = BABYLON.MeshBuilder.CreateGroundFromHeightMap("gdhm","images/hmap14.png",groundOptions, scene);
     //const ground = BABYLON.MeshBuilder.CreateGroundFromHeightMap("gdhm", 'images/hmap1.png', groundOptions, scene); 
     
     function onGroundCreated() {
 
-        // ========== DEBUT NAVMESH =========
-        var staticMesh = ground;
-        var navmeshParameters = {
-            cs: 0.2,
-            ch: 0.2,
-            walkableSlopeAngle: 20,
-            walkableHeight: 20,
-            walkableClimb: 2.8,
-            walkableRadius: 18,
-            maxEdgeLen: 12.,
-            maxSimplificationError: 1.3,
-            minRegionArea: 6,
-            mergeRegionArea: 10,
-            maxVertsPerPoly: 6,
-            detailSampleDist: 6,
-            detailSampleMaxError: 1,
-            };
-
-        navigationPlugin.createNavMesh([staticMesh], navmeshParameters);
-
-        //debug navmesh (permet de voir la navmesh)
-        var navmeshdebug = navigationPlugin.createDebugNavMesh(scene);
-        navmeshdebug.position = new BABYLON.Vector3(0, 0.01, 0);
-        
-        var matdebug = new BABYLON.StandardMaterial('matdebug', scene);
-        matdebug.diffuseColor = new BABYLON.Color3(0.1, 0.2, 1);
-        matdebug.alpha = 0.2;
-        navmeshdebug.material = matdebug;
-
-        // ========== FIN NAVMESH =========
         const groundMaterial = new BABYLON.StandardMaterial("groundMaterial", scene);
         
         groundMaterial.diffuseTexture = new BABYLON.Texture("textures/test/lambert1_Base_Color.png");
@@ -124,20 +128,105 @@ function createGround(scene, dimplan, navigationPlugin) {
     }
     return ground;
 }
+let zMovement = 5;
+function createPlayer(scene){
+    BABYLON.SceneLoader.ImportMesh("", "models/Persos/", "Jolleen.babylon", scene, function (meshes, particleSystems, skeletons)  {  
+        let player = meshes[0];
+        let playerMaterial = new BABYLON.StandardMaterial("playerTexture", scene);
+        playerMaterial.diffuseTexture = new BABYLON.Texture("models/Persos/Jolleen_Diffuse.png");
+        playerMaterial.emissiveTexture = new BABYLON.Texture("models/Persos/Jolleen_Glossiness.png");
+        playerMaterial.bumpTexture = new BABYLON.Texture("models/Persos/Jolleen_Normal.png");
+        playerMaterial.specularTexture = new BABYLON.Texture("models/Persos/Jolleen_Specular.png");
+
+        player.scaling = new BABYLON.Vector3(1, 1, 1);
+        player.death = false;
+        player.name = "Jolleen";
+        player.position.x = 1000 + Math.random()*1000;
+        player.position.z = 1000 + Math.random()*1000;
+        player.position.y = 10;
+        player.material = playerMaterial;
+
+        player.frontVector = new BABYLON.Vector3(0, 0, -1);
+        player.speed = 2;
+
+    
+        let idleAnim = scene.beginWeightedAnimation(skeletons[0], 73, 195,1.0 ,true, 1);
+        let walkAnim = scene.beginWeightedAnimation(skeletons[0], 251, 291,0.0, true, 1);
+        let runAnim= scene.beginWeightedAnimation(skeletons[0], 213, 224,0.0, true, 1);
+        let deathAnim= scene.beginWeightedAnimation(skeletons[0], 0, 63, 0.0,false, 0.35);
+        
+
+        
+    player.changeState = (state) => {
+        if (state == "idle"){
+            idleAnim.weight = 1.0;
+            walkAnim.weight = 0.0;
+            runAnim.weight = 0.0;
+        } else if (state == "walk"){
+            idleAnim.weight = 0.0;
+            walkAnim.weight = 1.0;
+            runAnim.weight = 0.0;
+        }
+        else if (state == "run"){
+            idleAnim.weight = 0.0;
+            walkAnim.weight = 0.0;
+            runAnim.weight = 1.0;
+        }
+        else if (state == "death"){
+            idleAnim.weight = 0.0;
+            walkAnim.weight = 0.0;
+            runAnim.weight = 0.0;
+            deathAnim.weight = 1.0;
+        }
+    }
+    player.move= () =>{
+        let yMovement = 0;
+        if(!player.death){
+            if (player.position.y > 2) {
+                zMovement = 0;
+                yMovement = -2;
+            } 
+
+            if(inputStates.up) {
+                player.moveWithCollisions(player.frontVector.multiplyByFloats(player.speed, player.speed, player.speed));
+                player.changeState("walk");
+            }    
+            if(inputStates.down) {
+                player.moveWithCollisions(player.frontVector.multiplyByFloats(-player.speed, -player.speed, -player.speed));
+                player.changeState("walk");
+            }    
+            if(inputStates.left) {
+                player.rotation.y -= 0.02;
+                player.frontVector = new BABYLON.Vector3(Math.sin(player.rotation.y), 0, Math.cos(player.rotation.y));
+            }    
+            if(inputStates.right) {
+                player.rotation.y += 0.02;
+                player.frontVector = new BABYLON.Vector3(Math.sin(player.rotation.y), 0, Math.cos(player.rotation.y));
+            }
+            if (!inputStates.up && !inputStates.down)
+                player.changeState("idle");
+
+            if (inputStates.o){
+                player.death = true;
+                player.changeState("death");
+            }
+        }
+        }});
+}
 
 function createMobs(scene){   
-    let x = 40 + Math.random()*20;
-    let y = 5;
-    let z = 50 + Math.random()*20;
+    let x = 1000 + Math.random()*1000;
+    let y = 10;
+    let z = 1000 + Math.random()*1000;
         
     BABYLON.SceneLoader.ImportMesh("", "models/Persos/", "crabe.glb", scene, function (meshes) {  
         let crabeM = meshes[0];
         let mobMaterial = new BABYLON.StandardMaterial("mobTexture", scene);
         mobMaterial.diffuseTexture = new BABYLON.Texture("models/Persos/crabe_Texture.png");
-        crabeM.scaling = new BABYLON.Vector3(1, 1, 1); 
+        crabeM.scaling = new BABYLON.Vector3(20, 20, 20); 
         crabeM.name ="crabeM";
-        crabeM.position.x = 40 + Math.random()*20;;
-        crabeM.position.z = 50 + Math.random()*20;;
+        crabeM.position.x = 1000 + Math.random()*1000;
+        crabeM.position.z = 1000 + Math.random()*1000;
         crabeM.position.y = 5;
         crabeM.material = mobMaterial;
 
@@ -148,10 +237,10 @@ function createMobs(scene){
         let batM = meshes[0];
         let mobMaterial = new BABYLON.StandardMaterial("mobTexture", scene);
         mobMaterial.diffuseTexture = new BABYLON.Texture("models/Persos/bat_Texture.png");
-        batM.scaling = new BABYLON.Vector3(1, 1, 1); 
+        batM.scaling = new BABYLON.Vector3(20, 20, 20); 
         batM.name ="batM";
-        batM.position.x = 40 + Math.random()*20;;
-        batM.position.z = 50 + Math.random()*20;;
+        batM.position.x = 1000 + Math.random()*1000;
+        batM.position.z = 1000 + Math.random()*1000;
         batM.position.y = 5;
         batM.material = mobMaterial;
 
@@ -162,10 +251,10 @@ function createMobs(scene){
         let cactusM = meshes[0];
         let mobMaterial = new BABYLON.StandardMaterial("mobTexture", scene);
         mobMaterial.diffuseTexture = new BABYLON.Texture("models/Persos/cactus_Texture.png");
-        cactusM.scaling = new BABYLON.Vector3(1, 1, 1); 
+        cactusM.scaling = new BABYLON.Vector3(20, 20, 20); 
         cactusM.name ="cactusM";
-        cactusM.position.x = 40 + Math.random()*20;;
-        cactusM.position.z = 50 + Math.random()*20;;
+        cactusM.position.x = 1000 + Math.random()*1000;
+        cactusM.position.z = 1000 + Math.random()*1000;
         cactusM.position.y = 5;
         cactusM.material = mobMaterial;
 
@@ -176,10 +265,10 @@ function createMobs(scene){
         let chickenM = meshes[0];
         let mobMaterial = new BABYLON.StandardMaterial("mobTexture", scene);
         mobMaterial.diffuseTexture = new BABYLON.Texture("models/Persos/chicken_Texture.png");
-        chickenM.scaling = new BABYLON.Vector3(1, 1, 1); 
+        chickenM.scaling = new BABYLON.Vector3(20, 20, 20); 
         chickenM.name ="chickenM";
-        chickenM.position.x = 40 + Math.random()*20;;
-        chickenM.position.z = 50 + Math.random()*20;;
+        chickenM.position.x = 1000 + Math.random()*1000;
+        chickenM.position.z = 1000 + Math.random()*1000;
         chickenM.position.y = 5;
         chickenM.material = mobMaterial;
 
@@ -190,10 +279,10 @@ function createMobs(scene){
         let demonM = meshes[0];
         let mobMaterial = new BABYLON.StandardMaterial("mobTexture", scene);
         mobMaterial.diffuseTexture = new BABYLON.Texture("models/Persos/demon_Texture.png");
-        demonM.scaling = new BABYLON.Vector3(1, 1, 1); 
+        demonM.scaling = new BABYLON.Vector3(20, 20, 20); 
         demonM.name ="demonM";
-        demonM.position.x = 40 + Math.random()*20;;
-        demonM.position.z = 50 + Math.random()*20;;
+        demonM.position.x = 1000 + Math.random()*1000;
+        demonM.position.z = 1000 + Math.random()*1000;
         demonM.position.y = 5;
         demonM.material = mobMaterial;
 
@@ -204,10 +293,10 @@ function createMobs(scene){
         let monsterM = meshes[0];
         let mobMaterial = new BABYLON.StandardMaterial("mobTexture", scene);
         mobMaterial.diffuseTexture = new BABYLON.Texture("models/Persos/monster_Texture.png");
-        monsterM.scaling = new BABYLON.Vector3(1, 1, 1); 
+        monsterM.scaling = new BABYLON.Vector3(20, 20, 20); 
         monsterM.name ="monsterM";
-        monsterM.position.x = 40 + Math.random()*20;;
-        monsterM.position.z = 50 + Math.random()*20;;
+        monsterM.position.x = 1000 + Math.random()*1000;
+        monsterM.position.z = 1000 + Math.random()*1000;
         monsterM.position.y = 5;
         monsterM.material = mobMaterial;
 
@@ -218,10 +307,10 @@ function createMobs(scene){
         let treeM = meshes[0];
         let mobMaterial = new BABYLON.StandardMaterial("mobTexture", scene);
         mobMaterial.diffuseTexture = new BABYLON.Texture("models/Persos/tree_Texture.png");
-        treeM.scaling = new BABYLON.Vector3(1, 1, 1); 
+        treeM.scaling =new BABYLON.Vector3(20, 20, 20); 
         treeM.name ="treeM";
-        treeM.position.x = 40 + Math.random()*20;;
-        treeM.position.z = 50 + Math.random()*20;;
+        treeM.position.x = 1000 + Math.random()*1000;
+        treeM.position.z = 1000 + Math.random()*1000;
         treeM.position.y = 5;
         treeM.material = mobMaterial;
 
@@ -229,6 +318,64 @@ function createMobs(scene){
     });
 }
 
+
+
+function createFollowCamera(scene, target) {
+    let camera = new BABYLON.FollowCamera("FollowCamera", target.position, scene, target);
+
+    camera.radius = 500; // how far from the object to follow
+	camera.heightOffset = 200; // how high above the object to place the camera
+	camera.rotationOffset = 180; // the viewing angle
+	camera.cameraAcceleration = .1; // how fast to move
+	camera.maxCameraSpeed = 5; // speed limit
+
+    return camera;
+}
+
+
+
 window.addEventListener("resize", () => {
     engine.resize()
 });
+
+inputStates.left = false;
+inputStates.right = false;
+inputStates.up = false;
+inputStates.down = false;
+inputStates.space = false;
+inputStates.o = false;
+
+//add the listener to the main, window object, and update the states
+window.addEventListener('keydown', (event) => {
+    if ((event.key === "ArrowLeft") || (event.key === "q")|| (event.key === "Q")) {
+        inputStates.left = true;
+    } else if ((event.key === "ArrowUp") || (event.key === "z")|| (event.key === "Z")){
+        inputStates.up = true;
+    } else if ((event.key === "ArrowRight") || (event.key === "d")|| (event.key === "D")){
+        inputStates.right = true;
+    } else if ((event.key === "ArrowDown")|| (event.key === "s")|| (event.key === "S")) {
+        inputStates.down = true;
+    }  else if (event.key === " ") {
+        inputStates.space = true;
+    }
+    else if (event.key === "o") {
+        inputStates.o = true;
+    }
+}, false);
+
+//if the key will be released, change the states object 
+window.addEventListener('keyup', (event) => {
+    if ((event.key === "ArrowLeft") || (event.key === "q")|| (event.key === "Q")) {
+        inputStates.left = false;
+    } else if ((event.key === "ArrowUp") || (event.key === "z")|| (event.key === "Z")){
+        inputStates.up = false;
+    } else if ((event.key === "ArrowRight") || (event.key === "d")|| (event.key === "D")){
+        inputStates.right = false;
+    } else if ((event.key === "ArrowDown")|| (event.key === "s")|| (event.key === "S")) {
+        inputStates.down = false;
+    }  else if (event.key === " ") {
+        inputStates.space = false;
+    }else if (event.key === "o") {
+        inputStates.o = false;
+    }
+}, false);

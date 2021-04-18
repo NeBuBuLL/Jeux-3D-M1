@@ -19,12 +19,12 @@ export default class Mob {
         this.bounder.mobMeshes = this.mobMeshes;*/
     }
 
-    createMob(scene,chemin,fichier,name){    
+    createMob(scene,chemin,fichier,name){
         BABYLON.SceneLoader.ImportMesh("", chemin, fichier, scene, function (meshes) {  
             let mob = meshes[0];
             let mobMaterial = new BABYLON.StandardMaterial("mobTexture", scene);
             mobMaterial.diffuseTexture = new BABYLON.Texture(chemin + name + "_Texture.png");
-            mob.scaling = new BABYLON.Vector3(1, 1, 1); 
+            mob.scaling = new BABYLON.Vector3(20, 20, 20); 
             mob.name = name;
             mob.position.x = 40 + Math.random()*20;
             mob.position.z = 50 + Math.random()*20;
