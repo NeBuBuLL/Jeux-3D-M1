@@ -1,30 +1,47 @@
-import Crab from "./Crab.js"
-import Bat from "./Bat.js"
+import Mob from "./Mob.js"
 
-Map = function(game){
+let canvas;
+let engine;
+let scene;
+let dimPlan = 300;
+
+window.onload = map;
+
+function map(){
     // Appel des variables nécéssaires
-    this.game = game;
-    var scene = game.scene;
-    let dimPlan = 300;
+    //this.game = game;
+    canvas = document.querySelector("#renderCanvas");
+    engine = new BABYLON.Engine(canvas, true);
+    scene = createScene();
+    
+    // Créons une sphère 
+    //var sphere = BABYLON.Mesh.CreateSphere("sphere1", 16, 2, scene);
+
+    // Remontons le sur l'axe y de la moitié de sa hauteur
+    //sphere.position.y = 1;
+    
+
+    engine.runRenderLoop(() => {
+
+        let crabe = scene.getMeshByName("crabeM");
+        try{
+            crabe._children[0]._children[0].showBoundingBox = true
+            //console.log(crabe.Mob.vitesse);
+        } catch(error){}
+
+        scene.render();
+    });
+
+};
+
+function createScene(){
+
     let navigationPlugin = new BABYLON.RecastJSPlugin();
-   
-    
-    // Création de notre lumière principale
-    var light = new BABYLON.HemisphericLight("light1", new BABYLON.Vector3(1, 1, 1), scene);
-    light.specular = new BABYLON.Color3(0,0,0);
-    
-    //creation du ground et de sa texture
-    //var ground = BABYLON.MeshBuilder.CreateGround("ground", {width: dimPlan, height: dimPlan}, scene);
 
+    let scene = new BABYLON.Scene(engine);
+    let ground = createGround(scene, dimPlan, navigationPlugin);
+    let camera = createCamera(scene);
 
-    /* 
-    var ground = BABYLON.MeshBuilder.CreateGroundFromHeightMap("ground","images/Hawaii_Heightmap.png",500,500,250,0,10, scene);
-
-    var textureplane = new BABYLON.StandardMaterial("textureS",scene);
-    textureplane.diffuseTexture = new BABYLON.Texture("assets/sable.jpg",scene);
-    ground.material = textureplane;
- */
-    createGround(scene,dimPlan,navigationPlugin);
     var skybox = BABYLON.MeshBuilder.CreateBox("skyBox", {size:9000}, scene);
     var skyboxMaterial = new BABYLON.StandardMaterial("skyBox", scene);
     skyboxMaterial.backFaceCulling = false;
@@ -33,9 +50,25 @@ Map = function(game){
     skyboxMaterial.disableLighting = true;
     skybox.material = skyboxMaterial;
 
-   // createMobs(scene);
+    createLights(scene);
+    createMobs(scene);
+    
 
-};
+    return scene;  
+}
+
+function createCamera(scene){
+    let camera = new BABYLON.FreeCamera("camera", new BABYLON.Vector3(0,50,0), scene);
+    camera.setTarget(new BABYLON.Vector3(0,0,0));
+    camera.attachControl(canvas, true);
+
+    return camera;
+}
+
+function createLights(scene){
+    var light = new BABYLON.HemisphericLight("light1", new BABYLON.Vector3(1, 1, 1), scene);
+    light.specular = new BABYLON.Color3(0,0,0);
+}
 
 function createGround(scene, dimplan, navigationPlugin) {
     const groundOptions = { width:dimplan, height:dimplan, subdivisions:100, minHeight:0, maxHeight:30, onReady: onGroundCreated};
@@ -93,25 +126,109 @@ function createGround(scene, dimplan, navigationPlugin) {
 }
 
 function createMobs(scene){   
-    
-    let crabe = new Crab(2,"crabe",3,20,10,250);
-    crabe.createMob(scene, "models/Persos/","crabe.glb", "crabe");
+    let x = 40 + Math.random()*20;
+    let y = 5;
+    let z = 50 + Math.random()*20;
+        
+    BABYLON.SceneLoader.ImportMesh("", "models/Persos/", "crabe.glb", scene, function (meshes) {  
+        let crabeM = meshes[0];
+        let mobMaterial = new BABYLON.StandardMaterial("mobTexture", scene);
+        mobMaterial.diffuseTexture = new BABYLON.Texture("models/Persos/crabe_Texture.png");
+        crabeM.scaling = new BABYLON.Vector3(1, 1, 1); 
+        crabeM.name ="crabeM";
+        crabeM.position.x = 40 + Math.random()*20;;
+        crabeM.position.z = 50 + Math.random()*20;;
+        crabeM.position.y = 5;
+        crabeM.material = mobMaterial;
+
+        let crabe = new Mob(crabeM,"crabe",2,3,20,5,250);
+    });
    
-    let bat = new Bat(2,"bat",3,20,5,250);
-    bat.createMob(scene,"models/Persos/","bat.glb","bat");
+    BABYLON.SceneLoader.ImportMesh("", "models/Persos/", "bat.glb", scene, function (meshes) {  
+        let batM = meshes[0];
+        let mobMaterial = new BABYLON.StandardMaterial("mobTexture", scene);
+        mobMaterial.diffuseTexture = new BABYLON.Texture("models/Persos/bat_Texture.png");
+        batM.scaling = new BABYLON.Vector3(1, 1, 1); 
+        batM.name ="batM";
+        batM.position.x = 40 + Math.random()*20;;
+        batM.position.z = 50 + Math.random()*20;;
+        batM.position.y = 5;
+        batM.material = mobMaterial;
+
+        let bat = new Mob(batM,"bat",2,3,20,5,250);
+    });
     
-    let cactus = new Bat(2,"cactus",3,20,5,250);
-    cactus.createMob(scene,"models/Persos/","cactus.glb","cactus");
+    BABYLON.SceneLoader.ImportMesh("", "models/Persos/", "cactus.glb", scene, function (meshes) {  
+        let cactusM = meshes[0];
+        let mobMaterial = new BABYLON.StandardMaterial("mobTexture", scene);
+        mobMaterial.diffuseTexture = new BABYLON.Texture("models/Persos/cactus_Texture.png");
+        cactusM.scaling = new BABYLON.Vector3(1, 1, 1); 
+        cactusM.name ="cactusM";
+        cactusM.position.x = 40 + Math.random()*20;;
+        cactusM.position.z = 50 + Math.random()*20;;
+        cactusM.position.y = 5;
+        cactusM.material = mobMaterial;
 
-    let chicken = new Bat(2,"chicken",3,20,5,250);
-    chicken.createMob(scene,"models/Persos/","chicken.glb","chicken");
+        let cactus = new Mob(cactusM,"cactus",2,3,20,5,250);
+    });
 
-    let demon = new Bat(2,"demon",3,20,5,250);
-    demon.createMob(scene,"models/Persos/","demon.glb","demon");
+    BABYLON.SceneLoader.ImportMesh("", "models/Persos/", "chicken.glb", scene, function (meshes) {  
+        let chickenM = meshes[0];
+        let mobMaterial = new BABYLON.StandardMaterial("mobTexture", scene);
+        mobMaterial.diffuseTexture = new BABYLON.Texture("models/Persos/chicken_Texture.png");
+        chickenM.scaling = new BABYLON.Vector3(1, 1, 1); 
+        chickenM.name ="chickenM";
+        chickenM.position.x = 40 + Math.random()*20;;
+        chickenM.position.z = 50 + Math.random()*20;;
+        chickenM.position.y = 5;
+        chickenM.material = mobMaterial;
 
-    let monster = new Bat(2,"monster",3,20,5,250);
-    monster.createMob(scene,"models/Persos/","monster.glb","monster");
+        let chicken = new Mob(chickenM,"chicken",2,3,20,5,250);
+    });
 
-    let tree = new Bat(2,"tree",3,20,5,250);
-    tree.createMob(scene,"models/Persos/","tree.glb","tree");
+    BABYLON.SceneLoader.ImportMesh("", "models/Persos/", "demon.glb", scene, function (meshes) {  
+        let demonM = meshes[0];
+        let mobMaterial = new BABYLON.StandardMaterial("mobTexture", scene);
+        mobMaterial.diffuseTexture = new BABYLON.Texture("models/Persos/demon_Texture.png");
+        demonM.scaling = new BABYLON.Vector3(1, 1, 1); 
+        demonM.name ="demonM";
+        demonM.position.x = 40 + Math.random()*20;;
+        demonM.position.z = 50 + Math.random()*20;;
+        demonM.position.y = 5;
+        demonM.material = mobMaterial;
+
+        let demon = new Mob(demonM,"demon",2,3,20,5,250);
+    });
+
+    BABYLON.SceneLoader.ImportMesh("", "models/Persos/", "monster.glb", scene, function (meshes) {  
+        let monsterM = meshes[0];
+        let mobMaterial = new BABYLON.StandardMaterial("mobTexture", scene);
+        mobMaterial.diffuseTexture = new BABYLON.Texture("models/Persos/monster_Texture.png");
+        monsterM.scaling = new BABYLON.Vector3(1, 1, 1); 
+        monsterM.name ="monsterM";
+        monsterM.position.x = 40 + Math.random()*20;;
+        monsterM.position.z = 50 + Math.random()*20;;
+        monsterM.position.y = 5;
+        monsterM.material = mobMaterial;
+
+        let monster = new Mob(monsterM,"monster",2,3,20,5,250);
+    });
+
+    BABYLON.SceneLoader.ImportMesh("", "models/Persos/", "tree.glb", scene, function (meshes) {  
+        let treeM = meshes[0];
+        let mobMaterial = new BABYLON.StandardMaterial("mobTexture", scene);
+        mobMaterial.diffuseTexture = new BABYLON.Texture("models/Persos/tree_Texture.png");
+        treeM.scaling = new BABYLON.Vector3(1, 1, 1); 
+        treeM.name ="treeM";
+        treeM.position.x = 40 + Math.random()*20;;
+        treeM.position.z = 50 + Math.random()*20;;
+        treeM.position.y = 5;
+        treeM.material = mobMaterial;
+
+        let tree = new Mob(treeM,"tree",2,3,20,5,250);
+    });
 }
+
+window.addEventListener("resize", () => {
+    engine.resize()
+});
