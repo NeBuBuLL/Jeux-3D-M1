@@ -1,5 +1,5 @@
 import Mob from "./Mob.js"
-import Player from "./Player.js"
+
 let canvas;
 let engine;
 let scene;
@@ -140,6 +140,7 @@ function createPlayer(scene){
 
         player.scaling = new BABYLON.Vector3(1, 1, 1);
         player.death = false;
+        player.walk = false;
         player.name = "Jolleen";
         player.position.x = 1000 + Math.random()*1000;
         player.position.z = 1000 + Math.random()*1000;
@@ -152,7 +153,7 @@ function createPlayer(scene){
     
         let idleAnim = scene.beginWeightedAnimation(skeletons[0], 73, 195,1.0 ,true, 1);
         let walkAnim = scene.beginWeightedAnimation(skeletons[0], 251, 291,0.0, true, 1);
-        let runAnim= scene.beginWeightedAnimation(skeletons[0], 213, 224,0.0, true, 1);
+        let runAnim= scene.beginWeightedAnimation(skeletons[0], 211, 226,0.0, true, 1);
         let deathAnim= scene.beginWeightedAnimation(skeletons[0], 0, 63, 0.0,false, 0.35);
         
 
@@ -186,14 +187,21 @@ function createPlayer(scene){
                 zMovement = 0;
                 yMovement = -2;
             } 
-
             if(inputStates.up) {
+                if (inputStates.shift){
+                    player.speed = 8;
+                    player.changeState("run");
+                }else{
+                    player.speed = 2;
+                    player.changeState("walk");
+                }
                 player.moveWithCollisions(player.frontVector.multiplyByFloats(player.speed, player.speed, player.speed));
-                player.changeState("walk");
             }    
             if(inputStates.down) {
+                player.speed = 1;
                 player.moveWithCollisions(player.frontVector.multiplyByFloats(-player.speed, -player.speed, -player.speed));
                 player.changeState("walk");
+                player.walk = true;
             }    
             if(inputStates.left) {
                 player.rotation.y -= 0.02;
@@ -205,11 +213,13 @@ function createPlayer(scene){
             }
             if (!inputStates.up && !inputStates.down)
                 player.changeState("idle");
+                player.walk = false;
 
             if (inputStates.o){
                 player.death = true;
                 player.changeState("death");
             }
+            
         }
         }});
 }
@@ -343,6 +353,7 @@ inputStates.right = false;
 inputStates.up = false;
 inputStates.down = false;
 inputStates.space = false;
+inputStates.shift = false;
 inputStates.o = false;
 
 //add the listener to the main, window object, and update the states
@@ -355,10 +366,11 @@ window.addEventListener('keydown', (event) => {
         inputStates.right = true;
     } else if ((event.key === "ArrowDown")|| (event.key === "s")|| (event.key === "S")) {
         inputStates.down = true;
-    }  else if (event.key === " ") {
+    } else if (event.key === " ") {
         inputStates.space = true;
-    }
-    else if (event.key === "o") {
+    } else if (event.key === "Shift") {
+        inputStates.shift = true;
+    } else if (event.key === "o") {
         inputStates.o = true;
     }
 }, false);
@@ -373,9 +385,11 @@ window.addEventListener('keyup', (event) => {
         inputStates.right = false;
     } else if ((event.key === "ArrowDown")|| (event.key === "s")|| (event.key === "S")) {
         inputStates.down = false;
-    }  else if (event.key === " ") {
+    } else if (event.key === " ") {
         inputStates.space = false;
-    }else if (event.key === "o") {
+    } else if (event.key === "Shift") {
+        inputStates.shift = false;
+    } else if (event.key === "o") {
         inputStates.o = false;
     }
 }, false);
