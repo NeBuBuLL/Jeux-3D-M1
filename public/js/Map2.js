@@ -9,8 +9,7 @@ let inputStates = {};
 window.onload = map;
 
 function map(){
-    // Appel des variables nécéssaires
-    //this.game = game;
+
     canvas = document.querySelector("#renderCanvas");
     engine = new BABYLON.Engine(canvas, true);
     scene = createScene();
@@ -21,14 +20,9 @@ function map(){
     // Remontons le sur l'axe y de la moitié de sa hauteur
     //sphere.position.y = 1;
 
-    var gravityVector = new BABYLON.Vector3(0,-9.81,0);
-    var physicsPlugin = new BABYLON.CannonJSPlugin();
-    scene.enablePhysics(gravityVector,physicsPlugin);
-
     let cameraset  = false ;
 
-    engine.runRenderLoop(() => {
-
+    scene.toRender = () => {
 
         let player = scene.getMeshByName("Jolleen");
         if (player){
@@ -38,22 +32,19 @@ function map(){
                 cameraset = true;
             }
             player.move();
-        } 
-
-        let crabe = scene.getMeshByName("crabeM");
-        try{
-            crabe._children[0]._children[0].showBoundingBox = true
-            //console.log(crabe.Mob.vitesse);
-        } catch(error){}
+        }
 
         scene.render();
-    });
+    };
+    scene.assetManager.load();
 
 };
 
 function createScene(){
 
     let scene = new BABYLON.Scene(engine);
+    scene.assetManager = configureAssetManager(scene);
+
     let ground = createGround(scene, dimPlan);
     
     let camera = createCamera(scene);
@@ -88,8 +79,27 @@ function createScene(){
     createMobs(scene);
     
     createPlayer(scene);
+    loadSounds(scene);
 
     return scene;  
+}
+
+function configureAssetManager(scene) {
+    let assetsManager = new BABYLON.AssetsManager(scene);
+
+    assetsManager.onProgress = function(remainingCount, totalCount, lastFinishedTask) {
+        engine.loadingUIText = 'We are loading the scene. ' + remainingCount + ' out of ' + totalCount + ' items still need to be loaded.';
+        engine.loadingUIBackgroundColor = "steelblue";
+        console.log('We are loading the scene. ' + remainingCount + ' out of ' + totalCount + ' items still need to be loaded.');
+    };
+
+    assetsManager.onFinish = function(tasks) {
+
+        engine.runRenderLoop(function() {
+            scene.toRender();
+        });
+    };
+    return assetsManager;
 }
 
 function createCamera(scene){
@@ -130,14 +140,41 @@ function createGround(scene, dimplan) {
         ground.material = groundMaterial;
         ground.checkCollisions = true;
 
-        ground.physicsImpostor = new BABYLON.PhysicsImpostor(ground, BABYLON.PhysicsImpostor.HeightmapImpostor, { mass: 0 });
-
     }
     return ground;
 }
+
+function loadSounds(scene){
+    var assetsManager = scene.assetManager;
+
+    let binaryTask = assetsManager.addBinaryFileTask(
+        "generique",
+        "sons/naruto-1-instru.mp3"
+    );
+    binaryTask.onSuccess = function (task) {
+        scene.assets.generique = new BABYLON.Sound(
+            "generique",
+            task.data,
+            scene,
+            null,
+            {
+            loop: true,
+            autoplay: true,
+            }
+        );
+    };
+}
+
 let zMovement = 5;
 function createPlayer(scene){
-    BABYLON.SceneLoader.ImportMesh("", "models/Persos/", "Jolleen.babylon", scene, function (meshes, particleSystems, skeletons)  {  
+
+    let meshTask = scene.assetManager.addMeshTask("Joleen task", "", "models/Persos/", "Jolleen.babylon");
+
+    meshTask.onSuccess = function (task) {
+        onJoleenImported(task.loadedMeshes, task.loadedParticleSystems, task.loadedSkeletons);
+    }
+
+    function onJoleenImported(meshes, particleSystems, skeletons) {
         let player = meshes[0];
         let playerMaterial = new BABYLON.StandardMaterial("playerTexture", scene);
         playerMaterial.diffuseTexture = new BABYLON.Texture("models/Persos/Jolleen_Diffuse.png");
@@ -188,16 +225,17 @@ function createPlayer(scene){
         player.move= () =>{
             let yMovement = 0;
             if(!player.death){
+                followGround(player);
                 if (player.position.y > 2) {
                     zMovement = 0;
                     yMovement = -2;
                 } 
                 if(inputStates.up) {
                     if (inputStates.shift){
-                        player.speed = 8;
+                        player.speed = 15;
                         player.changeState("run");
                     }else{
-                        player.speed = 2;
+                        player.speed = 5;
                         player.changeState("walk");
                     }
                     player.moveWithCollisions(player.frontVector.multiplyByFloats(player.speed, player.speed, player.speed));
@@ -227,12 +265,36 @@ function createPlayer(scene){
             }
         }
 
-        player.showBoundingBox = true;
-        console.log(player.getBoundingInfo().boundingBox)
-        player.physicsImpostor = new BABYLON.PhysicsImpostor(player,
-            BABYLON.PhysicsImpostor.BoxImpostor, {mass : 20}, scene);
-    });
+        /*player.followGround = () => {
+            // adjusts y position depending on ground height...
+        
+            // create a ray that starts above the dude, and goes down vertically
+            let origin = new BABYLON.Vector3(player.position.x, 1000, player.position.z);
+            let direction = new BABYLON.Vector3(0, -1, 0);
+            let ray = new BABYLON.Ray(origin, direction, 10000);
+        
+            // compute intersection point with the ground
+            let pickInfo = scene.pickWithRay(ray, (mesh) => { return(mesh.name === "gdhm"); });
 
+            let groundHeight = pickInfo.pickedPoint.y;
+            player.position.y = groundHeight;
+        
+            let bbInfo = player.getBoundingInfo();
+            //console.log(bbInfo)
+        
+            let max = bbInfo.boundingBox.maximum;
+            let min = bbInfo.boundingBox.minimum;
+        
+            // Not perfect, but kinda of works...
+            // Looks like collisions are computed on a box that has half the size... ?
+            //bounder.scaling.y = (max._y - min._y) * this.scaling * 2;
+        
+            let lengthY = (max._y - min._y);
+           player.position.y = groundHeight + lengthY * player.scaling.y/20
+
+            return groundHeight;
+        }*/
+    };
         
 }
 
@@ -240,8 +302,40 @@ function createMobs(scene){
     let x = 1000 + Math.random()*1000;
     let y = 10;
     let z = 1000 + Math.random()*1000;
+
+    let meshTaskCr = scene.assetManager.addMeshTask("Crabe task", "", "models/Persos/", "crabe.glb");
+    let meshTaskB = scene.assetManager.addMeshTask("Bat task", "", "models/Persos/", "bat.glb");
+    let meshTaskCa = scene.assetManager.addMeshTask("Cactus task", "", "models/Persos/", "cactus.glb");
+    let meshTaskCh = scene.assetManager.addMeshTask("Chicken task", "", "models/Persos/", "chicken.glb");
+    let meshTaskD = scene.assetManager.addMeshTask("Demon task", "", "models/Persos/", "demon.glb");
+    let meshTaskM = scene.assetManager.addMeshTask("Monster task", "", "models/Persos/", "monster.glb");
+    let meshTaskT = scene.assetManager.addMeshTask("Tree task", "", "models/Persos/", "tree.glb");
+
+
+    meshTaskCr.onSuccess = function (task) {
+        onCrabeImported(task.loadedMeshes, task.loadedParticleSystems, task.loadedSkeletons);
+    }
+    meshTaskB.onSuccess = function (task) {
+        onBatImported(task.loadedMeshes, task.loadedParticleSystems, task.loadedSkeletons);
+    }
+    meshTaskCa.onSuccess = function (task) {
+        onCactusImported(task.loadedMeshes, task.loadedParticleSystems, task.loadedSkeletons);
+    }
+    meshTaskCh.onSuccess = function (task) {
+        onChickenImported(task.loadedMeshes, task.loadedParticleSystems, task.loadedSkeletons);
+    }
+    meshTaskD.onSuccess = function (task) {
+        onDemonImported(task.loadedMeshes, task.loadedParticleSystems, task.loadedSkeletons);
+    }
+    meshTaskM.onSuccess = function (task) {
+        onMonsterImported(task.loadedMeshes, task.loadedParticleSystems, task.loadedSkeletons);
+    }
+    meshTaskT.onSuccess = function (task) {
+        onTreeImported(task.loadedMeshes, task.loadedParticleSystems, task.loadedSkeletons);
+    }
+
         
-    BABYLON.SceneLoader.ImportMesh("", "models/Persos/", "crabe.glb", scene, function (meshes) {  
+    function onCrabeImported(meshes, particleSystems, skeletons){  
         let crabeM = meshes[0];
         let mobMaterial = new BABYLON.StandardMaterial("mobTexture", scene);
         mobMaterial.diffuseTexture = new BABYLON.Texture("models/Persos/crabe_Texture.png");
@@ -253,14 +347,11 @@ function createMobs(scene){
         crabeM.material = mobMaterial;
 
         let crabe = new Mob(crabeM,"crabe",2,3,20,5,250);
+        //followGround(crabeM);
 
-        crabeM._children[0]._children[0].showBoundingBox = true;
-        console.log(crabeM._children[0]._children[0].getBoundingInfo())
-        crabeM.physicsImpostor = new BABYLON.PhysicsImpostor(crabeM,
-            BABYLON.PhysicsImpostor.BoxImpostor, {mass : 2}, scene);
-    });
+    };
    
-    BABYLON.SceneLoader.ImportMesh("", "models/Persos/", "bat.glb", scene, function (meshes) {  
+    function onBatImported(meshes, particleSystems, skeletons) {  
         let batM = meshes[0];
         let mobMaterial = new BABYLON.StandardMaterial("mobTexture", scene);
         mobMaterial.diffuseTexture = new BABYLON.Texture("models/Persos/bat_Texture.png");
@@ -272,14 +363,10 @@ function createMobs(scene){
         batM.material = mobMaterial;
 
         let bat = new Mob(batM,"bat",2,3,20,5,250);
-
-        batM._children[0]._children[0].showBoundingBox = true;
-        console.log(batM._children[0]._children[0].getBoundingInfo())
-        batM.physicsImpostor = new BABYLON.PhysicsImpostor(batM,
-            BABYLON.PhysicsImpostor.BoxImpostor, {mass : 2}, scene);
-    });
+        //followGround(batM);
+    };
     
-    BABYLON.SceneLoader.ImportMesh("", "models/Persos/", "cactus.glb", scene, function (meshes) {  
+    function onCactusImported(meshes, particleSystems, skeletons) {  
         let cactusM = meshes[0];
         let mobMaterial = new BABYLON.StandardMaterial("mobTexture", scene);
         mobMaterial.diffuseTexture = new BABYLON.Texture("models/Persos/cactus_Texture.png");
@@ -291,14 +378,10 @@ function createMobs(scene){
         cactusM.material = mobMaterial;
 
         let cactus = new Mob(cactusM,"cactus",2,3,20,5,250);
+        //followGround(cactusM);
+    };
 
-        cactusM._children[0]._children[0].showBoundingBox = true;
-        console.log(cactusM._children[0]._children[0].getBoundingInfo())
-        cactusM.physicsImpostor = new BABYLON.PhysicsImpostor(cactusM,
-            BABYLON.PhysicsImpostor.BoxImpostor, {mass : 2}, scene);
-    });
-
-    BABYLON.SceneLoader.ImportMesh("", "models/Persos/", "chicken.glb", scene, function (meshes) {  
+    function onChickenImported(meshes, particleSystems, skeletons) {  
         let chickenM = meshes[0];
         let mobMaterial = new BABYLON.StandardMaterial("mobTexture", scene);
         mobMaterial.diffuseTexture = new BABYLON.Texture("models/Persos/chicken_Texture.png");
@@ -310,14 +393,10 @@ function createMobs(scene){
         chickenM.material = mobMaterial;
 
         let chicken = new Mob(chickenM,"chicken",2,3,20,5,250);
+        //followGround(chickenM);
+    };
 
-        chickenM._children[0]._children[0].showBoundingBox = true;
-        console.log(chickenM._children[0]._children[0].getBoundingInfo())
-        chickenM.physicsImpostor = new BABYLON.PhysicsImpostor(chickenM,
-            BABYLON.PhysicsImpostor.BoxImpostor, {mass : 2}, scene);
-    });
-
-    BABYLON.SceneLoader.ImportMesh("", "models/Persos/", "demon.glb", scene, function (meshes) {  
+    function onDemonImported(meshes, particleSystems, skeletons) {  
         let demonM = meshes[0];
         let mobMaterial = new BABYLON.StandardMaterial("mobTexture", scene);
         mobMaterial.diffuseTexture = new BABYLON.Texture("models/Persos/demon_Texture.png");
@@ -329,14 +408,10 @@ function createMobs(scene){
         demonM.material = mobMaterial;
 
         let demon = new Mob(demonM,"demon",2,3,20,5,250);
+        //followGround(demonM);
+    };
 
-        demonM._children[0]._children[0].showBoundingBox = true;
-        console.log(demonM._children[0]._children[0].getBoundingInfo())
-        demonM.physicsImpostor = new BABYLON.PhysicsImpostor(demonM,
-            BABYLON.PhysicsImpostor.BoxImpostor, {mass : 2}, scene);
-    });
-
-    BABYLON.SceneLoader.ImportMesh("", "models/Persos/", "monster.glb", scene, function (meshes) {  
+    function onMonsterImported(meshes, particleSystems, skeletons) {  
         let monsterM = meshes[0];
         let mobMaterial = new BABYLON.StandardMaterial("mobTexture", scene);
         mobMaterial.diffuseTexture = new BABYLON.Texture("models/Persos/monster_Texture.png");
@@ -348,14 +423,10 @@ function createMobs(scene){
         monsterM.material = mobMaterial;
 
         let monster = new Mob(monsterM,"monster",2,3,20,5,250);
+        //followGround(monsterM);
+    };
 
-        monsterM._children[0]._children[0].showBoundingBox = true;
-        console.log(monsterM._children[0]._children[0].getBoundingInfo())
-        monsterM.physicsImpostor = new BABYLON.PhysicsImpostor(monsterM,
-            BABYLON.PhysicsImpostor.BoxImpostor, {mass : 2}, scene);
-    });
-
-    BABYLON.SceneLoader.ImportMesh("", "models/Persos/", "tree.glb", scene, function (meshes) {  
+    function onTreeImported(meshes, particleSystems, skeletons) {  
         let treeM = meshes[0];
         let mobMaterial = new BABYLON.StandardMaterial("mobTexture", scene);
         mobMaterial.diffuseTexture = new BABYLON.Texture("models/Persos/tree_Texture.png");
@@ -367,12 +438,8 @@ function createMobs(scene){
         treeM.material = mobMaterial;
 
         let tree = new Mob(treeM,"tree",2,3,20,5,250);
-
-        treeM._children[0]._children[0].showBoundingBox = true;
-        console.log(treeM._children[0]._children[0].getBoundingInfo())
-        treeM.physicsImpostor = new BABYLON.PhysicsImpostor(treeM,
-            BABYLON.PhysicsImpostor.BoxImpostor, {mass : 20}, scene);
-    });
+        //followGround(treeM);
+    };
 }
 
 
@@ -384,9 +451,39 @@ function createFollowCamera(scene, target) {
 	camera.heightOffset = 200; // how high above the object to place the camera
 	camera.rotationOffset = 180; // the viewing angle
 	camera.cameraAcceleration = .1; // how fast to move
-	camera.maxCameraSpeed = 5; // speed limit
+	camera.maxCameraSpeed = 10; // speed limit
 
     return camera;
+}
+
+function followGround(meshes){
+    // adjusts y position depending on ground height...
+
+    // create a ray that starts above the dude, and goes down vertically
+    let origin = new BABYLON.Vector3(meshes.position.x, 1000, meshes.position.z);
+    let direction = new BABYLON.Vector3(0, -1, 0);
+    let ray = new BABYLON.Ray(origin, direction, 10000);
+
+    // compute intersection point with the ground
+    let pickInfo = scene.pickWithRay(ray, (mesh) => { return(mesh.name === "gdhm"); });
+
+    let groundHeight = pickInfo.pickedPoint.y;
+    meshes.position.y = groundHeight;
+
+    let bbInfo = meshes.getBoundingInfo();
+    //console.log(bbInfo)
+
+    let max = bbInfo.boundingBox.maximum;
+    let min = bbInfo.boundingBox.minimum;
+
+    // Not perfect, but kinda of works...
+    // Looks like collisions are computed on a box that has half the size... ?
+    //bounder.scaling.y = (max._y - min._y) * this.scaling * 2;
+
+    let lengthY = (max._y - min._y);
+    meshes.position.y = groundHeight + lengthY * meshes.scaling.y/20
+
+    return groundHeight;
 }
 
 
