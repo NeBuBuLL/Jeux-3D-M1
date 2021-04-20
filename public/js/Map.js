@@ -6,24 +6,20 @@ let scene;
 let dimPlan = 8000;
 let inputStates = {};
 
+let life_by_level = [500, 550, 600, 650,700, 750, 800, 850, 1000]; 
+let level_xp = [50, 100, 125, 175, 250, 325, 425, 550, 750, 1000];
+
 window.onload = map;
 
 function map(){
-    // Appel des variables nécéssaires
-    //this.game = game;
+    // Appel des variables nécéssaire
     canvas = document.querySelector("#renderCanvas");
     engine = new BABYLON.Engine(canvas, true);
     scene = createScene();
     
-    // Créons une sphère 
-    //var sphere = BABYLON.Mesh.CreateSphere("sphere1", 16, 2, scene);
-
-    // Remontons le sur l'axe y de la moitié de sa hauteur
-    //sphere.position.y = 1;
     let cameraset  = false ;
 
     engine.runRenderLoop(() => {
-
 
         let player = scene.getMeshByName("Jolleen");
         if (player){
@@ -33,6 +29,11 @@ function map(){
                 cameraset = true;
             }
             player.move();
+            console.log("player level: "+ player.getLevel() + " player xp: " + player.getXp() + " player attack: "+ player.getAttack() + " player def: " + player.getDefense());
+            player.changeLevel();
+            player.die();
+
+            
         } 
 
         let crabe = scene.getMeshByName("crabeM");
@@ -147,16 +148,23 @@ function createPlayer(scene){
         player.position.y = 10;
         player.material = playerMaterial;
 
-        player.frontVector = new BABYLON.Vector3(0, 0, -1);
+        //Player statistics
+        player.health = 500;
+        player.level = 1;
+        player.xp = 0;
+        player.attack = 25;
+        player.defense = 15;
         player.speed = 2;
+    
 
+        player.frontVector = new BABYLON.Vector3(0, 0, -1);
+    
     
         let idleAnim = scene.beginWeightedAnimation(skeletons[0], 73, 195,1.0 ,true, 1);
         let walkAnim = scene.beginWeightedAnimation(skeletons[0], 251, 291,0.0, true, 1);
         let runAnim= scene.beginWeightedAnimation(skeletons[0], 211, 226,0.0, true, 1);
         let deathAnim= scene.beginWeightedAnimation(skeletons[0], 0, 63, 0.0,false, 0.35);
-        
-
+    
         
     player.changeState = (state) => {
         if (state == "idle"){
@@ -180,6 +188,65 @@ function createPlayer(scene){
             deathAnim.weight = 1.0;
         }
     }
+
+    player.setHealth = (health) =>{
+        player.health = health;
+    }
+    player.setDefense = (defense) =>{
+        player.defense = defense;
+    }
+    player.setAttack = (attack) =>{
+        player.attack = attack;
+    }
+    player.isDead = () =>{
+        return player.health <= 0;
+    }
+    player.getHealth = () =>{
+        return player.health;
+    }
+    player.getDefense= () =>{
+        return player.defense;
+    }
+    player.getAttack = () =>{
+        return player.attack;
+    }
+    player.getLevel = () =>{
+        return player.level;
+    }
+    player.getXp = () =>{
+        return player.xp;
+    }
+    player.setXp = (xp) =>{
+        player.xp = xp;
+    }
+    player.addXp = (xp) =>{
+        player.xp +=xp; 
+    }
+    player.addLevel = () =>{
+        player.level++;
+    }
+    player.takeDamage = (damage) =>{
+        if(player.health >0)        
+            player.health -= damage;
+    }
+    player.changeLevel = () =>{
+        if (player.level < 10){
+            if(player.xp >= level_xp[player.getLevel() - 1]){
+                player.addLevel();
+                player.setXp(0);
+                player.setHealth(life_by_level[player.getLevel() - 1]);
+                player.setDefense(player.defense + 0.075*player.defense);
+                player.setAttack(player.attack + 0.075*player.attack);
+            }
+        }
+    }
+    player.die = () =>{
+        if (player.isDead()){
+            player.changeState("death");
+            player.setXp(0);
+        }
+    }
+
     player.move= () =>{
         let yMovement = 0;
         if(!player.death){
@@ -216,11 +283,16 @@ function createPlayer(scene){
                 player.walk = false;
 
             if (inputStates.o){
-                player.death = true;
-                player.changeState("death");
+                player.takeDamage(100);
+                inputStates.o = false;
             }
-            
+            if (inputStates.x){
+                player.addXp(1100);
+                inputStates.x = false;
+            }
         }
+
+        
         }});
 }
 
@@ -229,7 +301,7 @@ function createMobs(scene){
     let y = 10;
     let z = 1000 + Math.random()*1000;
         
-    BABYLON.SceneLoader.ImportMesh("", "models/Persos/", "crabe.glb", scene, function (meshes) {  
+    BABYLON.SceneLoader.ImportMesh("", "models/Mobs/", "Crab.babylon", scene, function (meshes, particleSystems, skeletons) {  
         let crabeM = meshes[0];
         let mobMaterial = new BABYLON.StandardMaterial("mobTexture", scene);
         mobMaterial.diffuseTexture = new BABYLON.Texture("models/Persos/crabe_Texture.png");
@@ -239,6 +311,8 @@ function createMobs(scene){
         crabeM.position.z = 1000 + Math.random()*1000;
         crabeM.position.y = 5;
         crabeM.material = mobMaterial;
+
+        let idleCrab = scene.beginWeightedAnimation(skeletons[0], 120, 180, 1.0 ,true, 1);
 
         let crabe = new Mob(crabeM,"crabe",2,3,20,5,250);
     });
@@ -257,7 +331,7 @@ function createMobs(scene){
         let bat = new Mob(batM,"bat",2,3,20,5,250);
     });
     
-    BABYLON.SceneLoader.ImportMesh("", "models/Persos/", "cactus.glb", scene, function (meshes) {  
+    BABYLON.SceneLoader.ImportMesh("", "models/Mobs/", "Cactus.babylon", scene, function (meshes) {  
         let cactusM = meshes[0];
         let mobMaterial = new BABYLON.StandardMaterial("mobTexture", scene);
         mobMaterial.diffuseTexture = new BABYLON.Texture("models/Persos/cactus_Texture.png");
@@ -271,7 +345,7 @@ function createMobs(scene){
         let cactus = new Mob(cactusM,"cactus",2,3,20,5,250);
     });
 
-    BABYLON.SceneLoader.ImportMesh("", "models/Persos/", "chicken.glb", scene, function (meshes) {  
+    BABYLON.SceneLoader.ImportMesh("", "models/Mobs/", "Chicken.babylon", scene, function (meshes) {  
         let chickenM = meshes[0];
         let mobMaterial = new BABYLON.StandardMaterial("mobTexture", scene);
         mobMaterial.diffuseTexture = new BABYLON.Texture("models/Persos/chicken_Texture.png");
@@ -304,7 +378,7 @@ function createMobs(scene){
         let mobMaterial = new BABYLON.StandardMaterial("mobTexture", scene);
         mobMaterial.diffuseTexture = new BABYLON.Texture("models/Persos/monster_Texture.png");
         monsterM.scaling = new BABYLON.Vector3(20, 20, 20); 
-        monsterM.name ="monsterM";
+        monsterM.name = "monsterM";
         monsterM.position.x = 1000 + Math.random()*1000;
         monsterM.position.z = 1000 + Math.random()*1000;
         monsterM.position.y = 5;
@@ -313,7 +387,7 @@ function createMobs(scene){
         let monster = new Mob(monsterM,"monster",2,3,20,5,250);
     });
 
-    BABYLON.SceneLoader.ImportMesh("", "models/Persos/", "tree.glb", scene, function (meshes) {  
+    BABYLON.SceneLoader.ImportMesh("", "models/Mobs/", "tree.babylon", scene, function (meshes) {  
         let treeM = meshes[0];
         let mobMaterial = new BABYLON.StandardMaterial("mobTexture", scene);
         mobMaterial.diffuseTexture = new BABYLON.Texture("models/Persos/tree_Texture.png");
@@ -337,7 +411,7 @@ function createFollowCamera(scene, target) {
 	camera.heightOffset = 200; // how high above the object to place the camera
 	camera.rotationOffset = 180; // the viewing angle
 	camera.cameraAcceleration = .1; // how fast to move
-	camera.maxCameraSpeed = 5; // speed limit
+	camera.maxCameraSpeed = 16; // speed limit
 
     return camera;
 }
@@ -355,6 +429,8 @@ inputStates.down = false;
 inputStates.space = false;
 inputStates.shift = false;
 inputStates.o = false;
+inputStates.x = false;
+
 
 //add the listener to the main, window object, and update the states
 window.addEventListener('keydown', (event) => {
@@ -372,8 +448,11 @@ window.addEventListener('keydown', (event) => {
         inputStates.shift = true;
     } else if (event.key === "o") {
         inputStates.o = true;
+    } else if (event.key === "x") {
+        inputStates.x = true;
     }
 }, false);
+
 
 //if the key will be released, change the states object 
 window.addEventListener('keyup', (event) => {
@@ -391,5 +470,7 @@ window.addEventListener('keyup', (event) => {
         inputStates.shift = false;
     } else if (event.key === "o") {
         inputStates.o = false;
+    } else if (event.key === "x") {
+        inputStates.x = false;
     }
 }, false);

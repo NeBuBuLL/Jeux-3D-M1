@@ -446,12 +446,11 @@ function createMobs(scene){
 
 function createFollowCamera(scene, target) {
     let camera = new BABYLON.FollowCamera("FollowCamera", target.position, scene, target);
-
     camera.radius = 500; // how far from the object to follow
 	camera.heightOffset = 200; // how high above the object to place the camera
 	camera.rotationOffset = 180; // the viewing angle
 	camera.cameraAcceleration = .1; // how fast to move
-	camera.maxCameraSpeed = 10; // speed limit
+	camera.maxCameraSpeed = 20; // speed limit
 
     return camera;
 }
@@ -459,7 +458,7 @@ function createFollowCamera(scene, target) {
 function followGround(meshes){
     // adjusts y position depending on ground height...
 
-    // create a ray that starts above the dude, and goes down vertically
+    // create a ray that starts above the player, and goes down vertically
     let origin = new BABYLON.Vector3(meshes.position.x, 1000, meshes.position.z);
     let direction = new BABYLON.Vector3(0, -1, 0);
     let ray = new BABYLON.Ray(origin, direction, 10000);
