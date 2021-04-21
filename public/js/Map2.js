@@ -5,6 +5,7 @@ let engine;
 let scene;
 let dimPlan = 8000;
 let inputStates = {};
+let mobs = [];
 
 window.onload = map;
 
@@ -32,6 +33,8 @@ function map(){
                 cameraset = true;
             }
             player.move();
+            //console.log(crabe._children[0]._children[0].getBoundingInfo().boundingBox)
+            //console.log(chicken.Mob.vitesse)
         }
 
         scene.render();
@@ -197,7 +200,7 @@ function createPlayer(scene){
         let idleAnim = scene.beginWeightedAnimation(skeletons[0], 73, 195,1.0 ,true, 1);
         let walkAnim = scene.beginWeightedAnimation(skeletons[0], 251, 291,0.0, true, 1);
         let runAnim= scene.beginWeightedAnimation(skeletons[0], 211, 226,0.0, true, 1);
-        let deathAnim= scene.beginWeightedAnimation(skeletons[0], 0, 63, 0.0,false, 0.2);
+        let deathAnim= scene.beginWeightedAnimation(skeletons[0], 0, 63, 0.0,false, 0.8);
 
         
         player.changeState = (state) => {
@@ -225,7 +228,8 @@ function createPlayer(scene){
         player.move= () =>{
             let yMovement = 0;
             if(!player.death){
-                followGround(player);
+                followGround(player,20);
+                followGround(bounderT,2);
                 if (player.position.y > 2) {
                     zMovement = 0;
                     yMovement = -2;
@@ -239,19 +243,23 @@ function createPlayer(scene){
                         player.changeState("walk");
                     }
                     player.moveWithCollisions(player.frontVector.multiplyByFloats(player.speed, player.speed, player.speed));
+                    bounderT.moveWithCollisions(player.frontVector.multiplyByFloats(player.speed, player.speed, player.speed));
                 }    
                 if(inputStates.down) {
                     player.speed = 1;
                     player.moveWithCollisions(player.frontVector.multiplyByFloats(-player.speed, -player.speed, -player.speed));
+                    bounderT.moveWithCollisions(player.frontVector.multiplyByFloats(-player.speed, -player.speed, -player.speed));
                     player.changeState("walk");
                     player.walk = true;
                 }    
                 if(inputStates.left) {
                     player.rotation.y -= 0.02;
+                    bounderT.rotation.y -= 0.02;
                     player.frontVector = new BABYLON.Vector3(Math.sin(player.rotation.y), 0, Math.cos(player.rotation.y));
                 }    
                 if(inputStates.right) {
                     player.rotation.y += 0.02;
+                    bounderT.rotation.y += 0.02;
                     player.frontVector = new BABYLON.Vector3(Math.sin(player.rotation.y), 0, Math.cos(player.rotation.y));
                 }
                 if (!inputStates.up && !inputStates.down)
@@ -263,45 +271,36 @@ function createPlayer(scene){
                     player.changeState("death");
                 }
             }
-        }
+        
+        }   
+        let bounderT = new BABYLON.Mesh.CreateBox("bounder", 10, scene);
+        let bounderMaterial = new BABYLON.StandardMaterial("bounderMaterial", scene);
+        bounderMaterial.alpha = 0.4;
+        bounderT.material = bounderMaterial;
+        bounderT.checkCollisions = true;
+        bounderT.position = player.position.clone();
 
-        /*player.followGround = () => {
-            // adjusts y position depending on ground height...
-        
-            // create a ray that starts above the dude, and goes down vertically
-            let origin = new BABYLON.Vector3(player.position.x, 1000, player.position.z);
-            let direction = new BABYLON.Vector3(0, -1, 0);
-            let ray = new BABYLON.Ray(origin, direction, 10000);
-        
-            // compute intersection point with the ground
-            let pickInfo = scene.pickWithRay(ray, (mesh) => { return(mesh.name === "gdhm"); });
+        let bbInfo = player.getBoundingInfo();
 
-            let groundHeight = pickInfo.pickedPoint.y;
-            player.position.y = groundHeight;
+        let max = bbInfo.boundingBox.maximum;
+        let min = bbInfo.boundingBox.minimum;
         
-            let bbInfo = player.getBoundingInfo();
-            //console.log(bbInfo)
-        
-            let max = bbInfo.boundingBox.maximum;
-            let min = bbInfo.boundingBox.minimum;
-        
-            // Not perfect, but kinda of works...
-            // Looks like collisions are computed on a box that has half the size... ?
-            //bounder.scaling.y = (max._y - min._y) * this.scaling * 2;
-        
-            let lengthY = (max._y - min._y);
-           player.position.y = groundHeight + lengthY * player.scaling.y/20
+        // Not perfect, but kinda of works...
+        // Looks like collisions are computed on a box that has half the size... ?
+        bounderT.scaling.x = (max._x - min._x) * player.scaling.x*0.06;
+        bounderT.scaling.y = (max._y - min._y) * player.scaling.y*0.12;
+        bounderT.scaling.z = (max._z - min._z) * player.scaling.z*0.12;
 
-            return groundHeight;
-        }*/
+        bounderT.isVisible = true;
+        bounderT.position.y += (max._y - min._y) * player.scaling.y/3;
+        
+
+        player.bounder = bounderT
     };
         
 }
 
-function createMobs(scene){   
-    let x = 1000 + Math.random()*1000;
-    let y = 10;
-    let z = 1000 + Math.random()*1000;
+function createMobs(scene){  
 
     let meshTaskCr = scene.assetManager.addMeshTask("Crabe task", "", "models/Persos/", "crabe.glb");
     let meshTaskB = scene.assetManager.addMeshTask("Bat task", "", "models/Persos/", "bat.glb");
@@ -343,12 +342,9 @@ function createMobs(scene){
         crabeM.name ="crabeM";
         crabeM.position.x = 1000 + Math.random()*1000;
         crabeM.position.z = 1000 + Math.random()*1000;
-        crabeM.position.y = 10;
         crabeM.material = mobMaterial;
-
-        let crabe = new Mob(crabeM,"crabe",2,3,20,5,250);
-        //followGround(crabeM);
-
+        
+        let crabe = new Mob(crabeM,"crabe",2,3,20,5,250,scene);
     };
    
     function onBatImported(meshes, particleSystems, skeletons) {  
@@ -359,11 +355,9 @@ function createMobs(scene){
         batM.name ="batM";
         batM.position.x = 1000 + Math.random()*1000;
         batM.position.z = 1000 + Math.random()*1000;
-        batM.position.y = 10;
         batM.material = mobMaterial;
 
-        let bat = new Mob(batM,"bat",2,3,20,5,250);
-        //followGround(batM);
+        let bat = new Mob(batM,"bat",2,3,20,5,250,scene);
     };
     
     function onCactusImported(meshes, particleSystems, skeletons) {  
@@ -374,11 +368,9 @@ function createMobs(scene){
         cactusM.name ="cactusM";
         cactusM.position.x = 1000 + Math.random()*1000;
         cactusM.position.z = 1000 + Math.random()*1000;
-        cactusM.position.y = 10;
         cactusM.material = mobMaterial;
 
-        let cactus = new Mob(cactusM,"cactus",2,3,20,5,250);
-        //followGround(cactusM);
+        let cactus = new Mob(cactusM,"cactus",2,3,20,5,250,scene);
     };
 
     function onChickenImported(meshes, particleSystems, skeletons) {  
@@ -389,11 +381,9 @@ function createMobs(scene){
         chickenM.name ="chickenM";
         chickenM.position.x = 1000 + Math.random()*1000;
         chickenM.position.z = 1000 + Math.random()*1000;
-        chickenM.position.y = 10;
         chickenM.material = mobMaterial;
 
-        let chicken = new Mob(chickenM,"chicken",2,3,20,5,250);
-        //followGround(chickenM);
+        let chicken = new Mob(chickenM,"chicken",2,3,20,5,250,scene);
     };
 
     function onDemonImported(meshes, particleSystems, skeletons) {  
@@ -404,11 +394,10 @@ function createMobs(scene){
         demonM.name ="demonM";
         demonM.position.x = 1000 + Math.random()*1000;
         demonM.position.z = 1000 + Math.random()*1000;
-        demonM.position.y = 10;
         demonM.material = mobMaterial;
 
-        let demon = new Mob(demonM,"demon",2,3,20,5,250);
-        //followGround(demonM);
+        let demon = new Mob(demonM,"demon",2,3,20,5,250,scene);
+        followGround(demonM,2);
     };
 
     function onMonsterImported(meshes, particleSystems, skeletons) {  
@@ -419,11 +408,9 @@ function createMobs(scene){
         monsterM.name ="monsterM";
         monsterM.position.x = 1000 + Math.random()*1000;
         monsterM.position.z = 1000 + Math.random()*1000;
-        monsterM.position.y = 10;
         monsterM.material = mobMaterial;
 
-        let monster = new Mob(monsterM,"monster",2,3,20,5,250);
-        //followGround(monsterM);
+        let monster = new Mob(monsterM,"monster",2,3,20,5,250,scene);
     };
 
     function onTreeImported(meshes, particleSystems, skeletons) {  
@@ -434,11 +421,9 @@ function createMobs(scene){
         treeM.name ="treeM";
         treeM.position.x = 1000 + Math.random()*1000;
         treeM.position.z = 1000 + Math.random()*1000;
-        treeM.position.y = 10;
         treeM.material = mobMaterial;
 
-        let tree = new Mob(treeM,"tree",2,3,20,5,250);
-        //followGround(treeM);
+        let tree = new Mob(treeM,"tree",2,3,20,5,250,scene);
     };
 }
 
@@ -455,7 +440,7 @@ function createFollowCamera(scene, target) {
     return camera;
 }
 
-function followGround(meshes){
+function followGround(meshes,s){
     // adjusts y position depending on ground height...
 
     // create a ray that starts above the player, and goes down vertically
@@ -480,7 +465,7 @@ function followGround(meshes){
     //bounder.scaling.y = (max._y - min._y) * this.scaling * 2;
 
     let lengthY = (max._y - min._y);
-    meshes.position.y = groundHeight + lengthY * meshes.scaling.y/20
+    meshes.position.y = groundHeight + lengthY * meshes.scaling.y/s
 
     return groundHeight;
 }
