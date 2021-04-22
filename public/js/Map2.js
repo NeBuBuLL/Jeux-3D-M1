@@ -26,7 +26,9 @@ function map(){
     scene.toRender = () => {
 
         let player = scene.getMeshByName("Jolleen");
-        if (player){
+        let crabe = scene.getMeshByName("crabeM");
+
+        if (player && crabe){
             if (!cameraset){
                 let followCamera = createFollowCamera(scene, player);
                 scene.activeCamera = followCamera;
@@ -34,7 +36,7 @@ function map(){
             }
             player.move();
             //console.log(crabe._children[0]._children[0].getBoundingInfo().boundingBox)
-            //console.log(chicken.Mob.vitesse)
+            //console.log(crabe.Mob.vitesse)
         }
 
         scene.render();
@@ -125,7 +127,7 @@ function createLights(scene){
 function createGround(scene, dimplan) {
     const groundOptions = { width:dimplan, height:dimplan, subdivisions:500, minHeight:-100, maxHeight:250, onReady: onGroundCreated};
     //scene is optional and defaults to the current scene
-    const ground = BABYLON.MeshBuilder.CreateGroundFromHeightMap("gdhm","images/hmap14.png",groundOptions, scene);
+    const ground = BABYLON.MeshBuilder.CreateGroundFromHeightMap("gdhm","images/hmap20.png",groundOptions, scene);
     //const ground = BABYLON.MeshBuilder.CreateGroundFromHeightMap("gdhm", 'images/hmap1.png', groundOptions, scene); 
     
     function onGroundCreated() {
@@ -200,7 +202,7 @@ function createPlayer(scene){
         let idleAnim = scene.beginWeightedAnimation(skeletons[0], 73, 195,1.0 ,true, 1);
         let walkAnim = scene.beginWeightedAnimation(skeletons[0], 251, 291,0.0, true, 1);
         let runAnim= scene.beginWeightedAnimation(skeletons[0], 211, 226,0.0, true, 1);
-        let deathAnim= scene.beginWeightedAnimation(skeletons[0], 0, 63, 0.0,false, 0.8);
+        let deathAnim= scene.beginWeightedAnimation(skeletons[0], 0, 63, 0.0,false, 0.35);
 
         
         player.changeState = (state) => {
@@ -277,7 +279,7 @@ function createPlayer(scene){
         let bounderMaterial = new BABYLON.StandardMaterial("bounderMaterial", scene);
         bounderMaterial.alpha = 0.4;
         bounderT.material = bounderMaterial;
-        bounderT.checkCollisions = true;
+        
         bounderT.position = player.position.clone();
 
         let bbInfo = player.getBoundingInfo();
@@ -293,7 +295,7 @@ function createPlayer(scene){
 
         bounderT.isVisible = true;
         bounderT.position.y += (max._y - min._y) * player.scaling.y/3;
-        
+        bounderT.checkCollisions = true;
 
         player.bounder = bounderT
     };
@@ -344,7 +346,9 @@ function createMobs(scene){
         crabeM.position.z = 1000 + Math.random()*1000;
         crabeM.material = mobMaterial;
         
-        let crabe = new Mob(crabeM,"crabe",2,3,20,5,250,scene);
+        //let crabe = new Mob(crabeM,"crabe",2,3,20,5,250,scene);
+        createBox(crabeM);
+        followGround(crabeM,2);
     };
    
     function onBatImported(meshes, particleSystems, skeletons) {  
@@ -357,7 +361,9 @@ function createMobs(scene){
         batM.position.z = 1000 + Math.random()*1000;
         batM.material = mobMaterial;
 
-        let bat = new Mob(batM,"bat",2,3,20,5,250,scene);
+        //let bat = new Mob(batM,"bat",2,3,20,5,250,scene);
+        createBox(batM);
+        //followGround(batM,2);
     };
     
     function onCactusImported(meshes, particleSystems, skeletons) {  
@@ -370,7 +376,9 @@ function createMobs(scene){
         cactusM.position.z = 1000 + Math.random()*1000;
         cactusM.material = mobMaterial;
 
-        let cactus = new Mob(cactusM,"cactus",2,3,20,5,250,scene);
+        //let cactus = new Mob(cactusM,"cactus",2,3,20,5,250,scene);
+        createBox(cactusM);
+        //followGround(cactusM,2);
     };
 
     function onChickenImported(meshes, particleSystems, skeletons) {  
@@ -383,7 +391,9 @@ function createMobs(scene){
         chickenM.position.z = 1000 + Math.random()*1000;
         chickenM.material = mobMaterial;
 
-        let chicken = new Mob(chickenM,"chicken",2,3,20,5,250,scene);
+        //let chicken = new Mob(chickenM,"chicken",2,3,20,5,250,scene);
+        createBox(chickenM)
+        //followGround(chickenM,2);
     };
 
     function onDemonImported(meshes, particleSystems, skeletons) {  
@@ -396,8 +406,9 @@ function createMobs(scene){
         demonM.position.z = 1000 + Math.random()*1000;
         demonM.material = mobMaterial;
 
-        let demon = new Mob(demonM,"demon",2,3,20,5,250,scene);
-        followGround(demonM,2);
+        //let demon = new Mob(demonM,"demon",2,3,20,5,250,scene);
+        createBox(demonM);
+        //followGround(demonM,2);
     };
 
     function onMonsterImported(meshes, particleSystems, skeletons) {  
@@ -410,7 +421,9 @@ function createMobs(scene){
         monsterM.position.z = 1000 + Math.random()*1000;
         monsterM.material = mobMaterial;
 
-        let monster = new Mob(monsterM,"monster",2,3,20,5,250,scene);
+        //let monster = new Mob(monsterM,"monster",2,3,20,5,250,scene);
+        createBox(monsterM);
+        //followGround(monsterM,2);
     };
 
     function onTreeImported(meshes, particleSystems, skeletons) {  
@@ -423,7 +436,9 @@ function createMobs(scene){
         treeM.position.z = 1000 + Math.random()*1000;
         treeM.material = mobMaterial;
 
-        let tree = new Mob(treeM,"tree",2,3,20,5,250,scene);
+        //let tree = new Mob(treeM,"tree",2,3,20,5,250,scene);
+        createBox(treeM);
+        //followGround(treeM,2);
     };
 }
 
@@ -468,6 +483,32 @@ function followGround(meshes,s){
     meshes.position.y = groundHeight + lengthY * meshes.scaling.y/s
 
     return groundHeight;
+}
+
+
+function createBox(meshes){
+
+    let bounder = new BABYLON.Mesh.CreateBox("bounder", 10, scene);
+        let bounderMaterial = new BABYLON.StandardMaterial("bounderMaterial", scene);
+        bounderMaterial.alpha = 0.4;
+        bounder.material = bounderMaterial;
+        bounder.checkCollisions = true;
+        bounder.position = meshes.position.clone();
+
+        let bbInfo = meshes._children[0]._children[0].getBoundingInfo();
+
+        let max = bbInfo.boundingBox.maximum;
+        let min = bbInfo.boundingBox.minimum;
+        
+        bounder.scaling.x = (max._x - min._x) * meshes.scaling.x*0.1;
+        bounder.scaling.y = (max._y - min._y) * meshes.scaling.y*0.12;
+        bounder.scaling.z = (max._z - min._z) * meshes.scaling.z*0.12;
+
+        bounder.isVisible = true;
+        bounder.position.y += (max._y - min._y) * meshes.scaling.y/3;
+        meshes.bounder = bounder;
+
+        return bounder;
 }
 
 
