@@ -46,8 +46,18 @@ function map(){
             }
             player.move();
             checkCollisions(player, mobs);
+            
             player.changeLevel();
+            //crabe.Mob.attackPlayer(player);
             player.die();
+            console.log("xp : " + player.getXp() + " lvl : " + player.getLevel());
+            crabe.Mob.dead(player);
+            player.attackMob(crabe, 10);
+
+
+            //console.log(crabe.Mob.getLevel());
+            //console.log(player.getHealth());
+
         }
 
         scene.render();
@@ -298,6 +308,11 @@ function createPlayer(scene){
                 }
             }
         }
+        player.attackMob = (mobMesh)=> {
+            //this.attack - 0,25 * playerMesh.getDefense()
+            mobMesh.Mob.takeDamage(player.attack - 0.25 * mobMesh.Mob.getDefense());
+        }
+
         player.die = () =>{
             if (player.isDead()){
                 player.changeState("death");
@@ -418,7 +433,7 @@ function createMobs(scene){
         crabeM.position.z = 1000 + Math.random()*1000;
         crabeM.material = mobMaterial;
         
-        //let crabe = new Mob(crabeM,"crabe",2,3,20,5,250,scene);
+        let crabe = new Mob(crabeM,"crabe",3,3,20,5,250,scene);
         createBox(crabeM);
         followGround(crabeM,2);
     };
@@ -433,9 +448,9 @@ function createMobs(scene){
         batM.position.z = 1000 + Math.random()*1000;
         batM.material = mobMaterial;
 
-        //let bat = new Mob(batM,"bat",2,3,20,5,250,scene);
+        let bat = new Mob(batM,"bat",2,3,20,5,250,scene);
         createBox(batM);
-        //followGround(batM,2);
+        followGround(batM,2);
     };
     
     function onCactusImported(meshes, particleSystems, skeletons) {  
@@ -448,9 +463,9 @@ function createMobs(scene){
         cactusM.position.z = 1000 + Math.random()*1000;
         cactusM.material = mobMaterial;
 
-        //let cactus = new Mob(cactusM,"cactus",2,3,20,5,250,scene);
+        let cactus = new Mob(cactusM,"cactus",2,3,20,5,250,scene);
         createBox(cactusM);
-        //followGround(cactusM,2);
+        followGround(cactusM,2);
     };
 
     function onChickenImported(meshes, particleSystems, skeletons) {  
@@ -463,9 +478,9 @@ function createMobs(scene){
         chickenM.position.z = 1000 + Math.random()*1000;
         chickenM.material = mobMaterial;
 
-        //let chicken = new Mob(chickenM,"chicken",2,3,20,5,250,scene);
+        let chicken = new Mob(chickenM,"chicken",2,3,20,5,250,scene);
         createBox(chickenM)
-        //followGround(chickenM,2);
+        followGround(chickenM,2);
     };
 
     function onDemonImported(meshes, particleSystems, skeletons) {  
@@ -478,9 +493,9 @@ function createMobs(scene){
         demonM.position.z = 1000 + Math.random()*1000;
         demonM.material = mobMaterial;
 
-        //let demon = new Mob(demonM,"demon",2,3,20,5,250,scene);
+        let demon = new Mob(demonM,"demon",2,3,20,5,250,scene);
         createBox(demonM);
-        //followGround(demonM,2);
+        followGround(demonM,2);
     };
 
     function onMonsterImported(meshes, particleSystems, skeletons) {  
@@ -493,9 +508,9 @@ function createMobs(scene){
         monsterM.position.z = 1000 + Math.random()*1000;
         monsterM.material = mobMaterial;
 
-        //let monster = new Mob(monsterM,"monster",2,3,20,5,250,scene);
+        let monster = new Mob(monsterM,"monster",2,3,20,5,250,scene);
         createBox(monsterM);
-        //followGround(monsterM,2);
+        followGround(monsterM,2);
     };
 
     function onTreeImported(meshes, particleSystems, skeletons) {  
@@ -508,13 +523,11 @@ function createMobs(scene){
         treeM.position.z = 1000 + Math.random()*1000;
         treeM.material = mobMaterial;
 
-        //let tree = new Mob(treeM,"tree",2,3,20,5,250,scene);
+        let tree = new Mob(treeM,"tree",2,3,20,5,250,scene);
         createBox(treeM);
-        //followGround(treeM,2);
+        followGround(treeM,2);
     };
 }
-
-
 
 function createFollowCamera(scene, target) {
     let camera = new BABYLON.FollowCamera("FollowCamera", target.position, scene, target);
@@ -587,10 +600,11 @@ function checkCollisions(meshes1, liste) {
     meshes1.bounder.actionManager = new BABYLON.ActionManager(scene);
     for (var a=0;a<liste.length;a++){
         meshes1.bounder.actionManager.registerAction(
-            new BABYLON.ExecuteCodeAction(
+            
+                new BABYLON.ExecuteCodeAction(
                 { trigger:BABYLON.ActionManager.OnIntersectionEnterTrigger, parameter:liste[a].bounder
                 }, 
-                function(){ console.log("Collisions")}
+                function(){ console.log("Collisions");}
             )
         )
     }

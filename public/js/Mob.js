@@ -1,42 +1,47 @@
 export default class Mob {
-    constructor(mobMeshes,nom,niveau,vitesse,attaque,defense,vie, scene) {
+    constructor(mobMeshes,name,level,speed,attack,defense,health, scene) {
         this.mobMeshes = mobMeshes;
-        this.nom = nom;
-        this.niveau = niveau;
-        this.vitesse = vitesse;
-        this.attaque = attaque;
+        this.name = name;
+        this.level = level;
+        this.speed = speed;
+        this.attack= attack;
         this.defense = defense;
-        this.vie = vie;
+        this.health = health;
         this.scene = scene;
-
         mobMeshes.Mob = this;
-
-        
-       if (Mob.boundingBoxParameters == undefined) {
-            Mob.boundingBoxParameters = this.calculateBoundingBoxParameters();
-        }
-
-        this.bounder = this.createBoundingBox();
-        this.bounder.mobMeshes = this.mobMeshes;
     }
 
-    /*createMob(scene,chemin,fichier,name){
-        BABYLON.SceneLoader.ImportMesh("", chemin, fichier, scene, function (meshes) {  
-            let mob = meshes[0];
-            let mobMaterial = new BABYLON.StandardMaterial("mobTexture", scene);
-            mobMaterial.diffuseTexture = new BABYLON.Texture(chemin + name + "_Texture.png");
-            mob.scaling = new BABYLON.Vector3(20, 20, 20); 
-            mob.name = name;
-            mob.position.x = 40 + Math.random()*20;
-            mob.position.z = 50 + Math.random()*20;
-            mob.position.y = 6;
-            mob.material = mobMaterial;
-        });
-    }*/
-    
-    //attack()
-    //defend()
-    //move()
+    getLevel(){
+        return this.level;
+    }
+    getDefense(){
+        return this.defense;
+    }
+    attackPlayer(playerMesh){
+        playerMesh.takeDamage(this.attack - 0,25 * playerMesh.getDefense());
+    }
+
+    takeDamage(damage){
+        if (this.health > 0){
+            this.health -= damage;
+        }
+    }
+    giveXp(playerMesh){
+        //ne gagne plus d'xp si le joueur est plus haut niveau d'au moins 3 level
+        let diff_level = playerMesh.getLevel() - this.level;
+        if (diff_level < 3){
+            playerMesh.addXp(10 * (this.level - diff_level));
+        }
+        else if (diff_level >= 3){
+            playerMesh.addXp(0);
+        }
+    }
+
+    dead(playerMesh){
+        if (this.health <= 0){
+            this.giveXp(playerMesh);
+        }
+    }
     
     //pas sure qu'elle sert cette fonction
     calculateBoundingBoxParameters() {
