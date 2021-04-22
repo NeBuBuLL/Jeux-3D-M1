@@ -27,16 +27,22 @@ function map(){
 
         let player = scene.getMeshByName("Jolleen");
         let crabe = scene.getMeshByName("crabeM");
+        let cactus = scene.getMeshByName("cactusM");
+        let chicken = scene.getMeshByName("chickenM");
+        let bat = scene.getMeshByName("batM");
+        let monster = scene.getMeshByName("monsterM");
+        let tree = scene.getMeshByName("treeM");
+        let demon = scene.getMeshByName("demonM");
+        mobs.push(crabe,cactus, chicken,bat,monster,tree,demon)
 
-        if (player && crabe){
+        if (player && crabe && cactus && chicken && bat && monster && tree && demon){
             if (!cameraset){
                 let followCamera = createFollowCamera(scene, player);
                 scene.activeCamera = followCamera;
                 cameraset = true;
             }
             player.move();
-            //console.log(crabe._children[0]._children[0].getBoundingInfo().boundingBox)
-            //console.log(crabe.Mob.vitesse)
+            checkCollisions(player, mobs);
         }
 
         scene.render();
@@ -241,27 +247,27 @@ function createPlayer(scene){
                         player.speed = 15;
                         player.changeState("run");
                     }else{
-                        player.speed = 5;
+                        player.speed = 8;
                         player.changeState("walk");
                     }
                     player.moveWithCollisions(player.frontVector.multiplyByFloats(player.speed, player.speed, player.speed));
                     bounderT.moveWithCollisions(player.frontVector.multiplyByFloats(player.speed, player.speed, player.speed));
                 }    
                 if(inputStates.down) {
-                    player.speed = 1;
+                    player.speed = 4;
                     player.moveWithCollisions(player.frontVector.multiplyByFloats(-player.speed, -player.speed, -player.speed));
                     bounderT.moveWithCollisions(player.frontVector.multiplyByFloats(-player.speed, -player.speed, -player.speed));
                     player.changeState("walk");
                     player.walk = true;
                 }    
                 if(inputStates.left) {
-                    player.rotation.y -= 0.02;
-                    bounderT.rotation.y -= 0.02;
+                    player.rotation.y -= 0.05;
+                    bounderT.rotation.y -= 0.05;
                     player.frontVector = new BABYLON.Vector3(Math.sin(player.rotation.y), 0, Math.cos(player.rotation.y));
                 }    
                 if(inputStates.right) {
-                    player.rotation.y += 0.02;
-                    bounderT.rotation.y += 0.02;
+                    player.rotation.y += 0.05;
+                    bounderT.rotation.y += 0.05;
                     player.frontVector = new BABYLON.Vector3(Math.sin(player.rotation.y), 0, Math.cos(player.rotation.y));
                 }
                 if (!inputStates.up && !inputStates.down)
@@ -450,7 +456,7 @@ function createFollowCamera(scene, target) {
 	camera.heightOffset = 200; // how high above the object to place the camera
 	camera.rotationOffset = 180; // the viewing angle
 	camera.cameraAcceleration = .1; // how fast to move
-	camera.maxCameraSpeed = 20; // speed limit
+	camera.maxCameraSpeed = 100; // speed limit
 
     return camera;
 }
@@ -511,7 +517,18 @@ function createBox(meshes){
         return bounder;
 }
 
-
+function checkCollisions(meshes1, liste) {
+    meshes1.bounder.actionManager = new BABYLON.ActionManager(scene);
+    for (var a=0;a<liste.length;a++){
+        meshes1.bounder.actionManager.registerAction(
+            new BABYLON.ExecuteCodeAction(
+                { trigger:BABYLON.ActionManager.OnIntersectionEnterTrigger, parameter:liste[a].bounder
+                }, 
+                function(){ console.log("Collisions")}
+            )
+        )
+    }
+}
 
 window.addEventListener("resize", () => {
     engine.resize()
