@@ -100,7 +100,20 @@ function createScene(){
     water.addToRenderList(skybox);
     water.addToRenderList(ground);;
 
-   
+   BABYLON.ParticleHelper.CreateAsync("smoke", scene).then((set) => {
+       set.systems.forEach((s) => {
+           s.disposeOnStop = true;
+           s.minScaleY = 100;
+           s.maxScaleY = 100;
+           s.minScaleX = 100;
+           s.maxScaleX = 100;
+           s.minScaleZ = 100;
+           s.maxScaleZ = 100;
+       });
+       set.start();
+       set.systems[0].worldOffset = new BABYLON.Vector3(3650,305,3160);
+   });
+
     createLights(scene);
     createMobs(scene);
     
