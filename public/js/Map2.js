@@ -1,6 +1,9 @@
 import Mob from "./Mob.js"
 
 let canvas;
+let health_progress;
+let health_bar;
+let level_of_player;
 let engine;
 let scene;
 let dimPlan = 8000;
@@ -12,9 +15,24 @@ let level_xp = [50, 100, 125, 175, 250, 325, 425, 550, 750, 1000];
 
 window.onload = map;
 
+/*function create_Player_UI(){
+    var div_progress = document.createElement("div");
+    var div_bar = document.createElement("div");
+    div_progress.id = "health_progress";
+    div_bar.id = "health_bar";
+    */
+
 function map(){
 
     canvas = document.querySelector("#renderCanvas");
+    
+    
+    create_Player_UI();
+    health_progress = document.querySelector("#health_progress");
+    health_bar = document.querySelector("#health_bar");
+
+
+    level_of_player = document.querySelector("#player_level");
     engine = new BABYLON.Engine(canvas, true);
     scene = createScene();
     
@@ -44,16 +62,20 @@ function map(){
                 scene.activeCamera = followCamera;
                 cameraset = true;
             }
+            update_health_bar(health_bar, player);
+           
             player.move();
             checkCollisions(player, mobs);
-            
+        
             player.changeLevel();
             //crabe.Mob.attackPlayer(player);
             player.die();
             console.log("xp : " + player.getXp() + " lvl : " + player.getLevel());
+            console.log("health : " + player.getHealth());
+
             crabe.Mob.dead(player);
             player.attackMob(crabe, 10);
-
+            //update_level(level_of_player, player);
 
             //console.log(crabe.Mob.getLevel());
             //console.log(player.getHealth());
@@ -231,9 +253,12 @@ function createPlayer(scene){
         let idleAnim = scene.beginWeightedAnimation(skeletons[0], 73, 195,1.0 ,true, 1);
         let walkAnim = scene.beginWeightedAnimation(skeletons[0], 251, 291,0.0, true, 1);
         let runAnim= scene.beginWeightedAnimation(skeletons[0], 211, 226,0.0, true, 1);
-        let deathAnim= scene.beginWeightedAnimation(skeletons[0], 0, 63, 0.0,false, 0.35);
+        let deathAnim = scene.beginWeightedAnimation(skeletons[0], 0, 63, 0.0,false, 0.15);
 
         
+        player.getposy = () =>{
+            console.log(player.position.y);
+        }
         player.changeState = (state) => {
             if (state == "idle"){
                 idleAnim.weight = 1.0;
@@ -293,9 +318,17 @@ function createPlayer(scene){
         player.addLevel = () =>{
             player.level++;
         }
+
+        player.drown = ()=>{
+            if (player.position.y <= -88)
+                player.takeDamage(life_by_level[player.level] / 25);
+        }
+
         player.takeDamage = (damage) =>{
-            if(player.health >0)        
+            if(player.health >0)  
                 player.health -= damage;
+            else 
+                player.health = 0;
         }
         player.changeLevel = () =>{
             if (player.level < 10){
@@ -309,12 +342,13 @@ function createPlayer(scene){
             }
         }
         player.attackMob = (mobMesh)=> {
-            //this.attack - 0,25 * playerMesh.getDefense()
             mobMesh.Mob.takeDamage(player.attack - 0.25 * mobMesh.Mob.getDefense());
         }
 
-        player.die = () =>{
+        player.die = () => {
+            player.drown();
             if (player.isDead()){
+                player.death = true;
                 player.changeState("death");
                 player.setXp(0);
             }
@@ -332,7 +366,7 @@ function createPlayer(scene){
                 } 
                 if(inputStates.up) {
                     if (inputStates.shift){
-                        player.speed = 15;
+                        player.speed = 25;
                         player.changeState("run");
                     }else{
                         player.speed = 8;
@@ -659,3 +693,54 @@ window.addEventListener('keyup', (event) => {
         inputStates.o = false;
     }
 }, false);
+
+
+function create_Player_UI(){
+    var div_progress = document.createElement("div");
+    var div_bar = document.createElement("div");
+    div_progress.id = "health_progress";
+    div_bar.id = "health_bar";
+     
+    
+    div_progress.style.position = "absolute";
+    div_progress.style.top = "10px";
+    div_progress.style.left = "10px";
+    div_progress.style.width = "500px";
+    div_progress.style.height = "30px";
+
+    div_bar.style.backgroundColor= "#4CAF50";
+    div_bar.style.height = "100%";
+    div_bar.style.color=  "black";
+    div_bar.style.fontWeight=  "bold";
+
+    div_bar.style.textAlign=  "left"; /* To center it horizontally (if you want) */
+    div_bar.style.lineHeight = "30px"; /* To center it vertically */
+
+    div_progress.appendChild(div_bar);
+    document.body.appendChild(div_progress);
+
+}
+
+function update_health_bar(health_bar, playerMesh){
+    let max_life = life_by_level[playerMesh.getLevel()-1];
+    let percent = playerMesh.getHealth() / max_life *100;
+    if (percent <= 25 ){
+        health_bar.style.backgroundColor= "red";
+    }
+    else if (percent <= 50 ){
+        health_bar.style.backgroundColor= "orange";
+    }
+    else if (percent <= 75 ){
+        health_bar.style.backgroundColor= "yellow";
+    }
+    health_bar.style.width = percent + "%";
+    health_bar.innerHTML = playerMesh.getHealth();
+}
+
+
+
+/* function update_level(level, playerMesh){
+    // <progress id="health" value="100" max="100"></progress>
+    level.innerHTML = "Level : " + playerMesh.getLevel();
+}
+  */
