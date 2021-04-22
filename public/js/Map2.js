@@ -7,6 +7,9 @@ let dimPlan = 8000;
 let inputStates = {};
 let mobs = [];
 
+let life_by_level = [500, 550, 600, 650,700, 750, 800, 850, 1000]; 
+let level_xp = [50, 100, 125, 175, 250, 325, 425, 550, 750, 1000];
+
 window.onload = map;
 
 function map(){
@@ -43,6 +46,8 @@ function map(){
             }
             player.move();
             checkCollisions(player, mobs);
+            player.changeLevel();
+            player.die();
         }
 
         scene.render();
@@ -131,27 +136,28 @@ function createLights(scene){
 
 
 function createGround(scene, dimplan) {
-    const groundOptions = { width:dimplan, height:dimplan, subdivisions:500, minHeight:-100, maxHeight:250, onReady: onGroundCreated};
-    //scene is optional and defaults to the current scene
+    var assetsManager = scene.assetManager;
+
+    const groundOptions = { width:dimplan, height:dimplan, subdivisions:500, minHeight:-100, maxHeight:250};
+
     const ground = BABYLON.MeshBuilder.CreateGroundFromHeightMap("gdhm","images/hmap20.png",groundOptions, scene);
-    //const ground = BABYLON.MeshBuilder.CreateGroundFromHeightMap("gdhm", 'images/hmap1.png', groundOptions, scene); 
+
+    var textureTask = assetsManager.addTextureTask("image task", "textures/test/lambert1_Base_Color.png");
+    var textureTask2 = assetsManager.addTextureTask("image task2", "textures/test/heightmap_lambert1_Glossiness.png");
+    var textureTask3 = assetsManager.addTextureTask("image task3", "textures/test/heightmap_lambert1_normal.png");
+    var textureTask4 = assetsManager.addTextureTask("image task4", "textures/test/lambert1_roughness.jpg");
+    var textureTask5 = assetsManager.addTextureTask("image task5", "textures/test/heightmap_lambert1_Specular.png");
+
+    const groundMaterial = new BABYLON.StandardMaterial("groundMaterial", scene);
     
-    function onGroundCreated() {
-
-        const groundMaterial = new BABYLON.StandardMaterial("groundMaterial", scene);
-        
-        groundMaterial.diffuseTexture = new BABYLON.Texture("textures/test/lambert1_Base_Color.png");
-        groundMaterial.emissiveTexture = new BABYLON.Texture("textures/test/heightmap_lambert1_Glossiness.png");
-        
-        groundMaterial.bumpTexture = new BABYLON.Texture("textures/test/heightmap_lambert1_normal.png");
-        
-        groundMaterial.roughnessTexture = new BABYLON.Texture("textures/test/lambert1_roughness.jpg");
-        groundMaterial.specularTexture = new BABYLON.Texture("textures/test/heightmap_lambert1_Specular.png");
-        
-        ground.material = groundMaterial;
-        ground.checkCollisions = true;
-
-    }
+    textureTask.onSuccess = function(task) {groundMaterial.diffuseTexture = task.texture;}
+    textureTask2.onSuccess = function(task) {groundMaterial.emissiveTexture = task.texture;}
+    textureTask3.onSuccess = function(task) {groundMaterial.bumpTexture = task.texture;}
+    textureTask4.onSuccess = function(task) {groundMaterial.roughnessTexture = task.texture;}
+    textureTask5.onSuccess = function(task) {groundMaterial.specularTexture = task.texture;}
+    
+    ground.material = groundMaterial;
+    ground.checkCollisions = true;
     return ground;
 }
 
@@ -171,6 +177,7 @@ function loadSounds(scene){
             {
             loop: true,
             autoplay: true,
+            volume : 0.5,
             }
         );
     };
@@ -201,10 +208,16 @@ function createPlayer(scene){
         player.position.z = 1000 + Math.random()*1000;
         player.position.y = 0;
         player.material = playerMaterial;
-
-        player.frontVector = new BABYLON.Vector3(0, 0, -1);
+        
+        //Player statistics
+        player.health = 500;
+        player.level = 1;
+        player.xp = 0;
+        player.attack = 25;
+        player.defense = 15;
         player.speed = 2;
-    
+        player.frontVector = new BABYLON.Vector3(0, 0, -1);
+
         let idleAnim = scene.beginWeightedAnimation(skeletons[0], 73, 195,1.0 ,true, 1);
         let walkAnim = scene.beginWeightedAnimation(skeletons[0], 251, 291,0.0, true, 1);
         let runAnim= scene.beginWeightedAnimation(skeletons[0], 211, 226,0.0, true, 1);
@@ -233,6 +246,66 @@ function createPlayer(scene){
                 deathAnim.weight = 1.0;
             }
         }
+
+        player.setHealth = (health) =>{
+            player.health = health;
+        }
+        player.setDefense = (defense) =>{
+            player.defense = defense;
+        }
+        player.setAttack = (attack) =>{
+            player.attack = attack;
+        }
+        player.isDead = () =>{
+            return player.health <= 0;
+        }
+        player.getHealth = () =>{
+            return player.health;
+        }
+        player.getDefense= () =>{
+            return player.defense;
+        }
+        player.getAttack = () =>{
+            return player.attack;
+        }
+        player.getLevel = () =>{
+            return player.level;
+        }
+        player.getXp = () =>{
+            return player.xp;
+        }
+        player.setXp = (xp) =>{
+            player.xp = xp;
+        }
+        player.addXp = (xp) =>{
+            player.xp +=xp; 
+        }
+        player.addLevel = () =>{
+            player.level++;
+        }
+        player.takeDamage = (damage) =>{
+            if(player.health >0)        
+                player.health -= damage;
+        }
+        player.changeLevel = () =>{
+            if (player.level < 10){
+                if(player.xp >= level_xp[player.getLevel() - 1]){
+                    player.addLevel();
+                    player.setXp(0);
+                    player.setHealth(life_by_level[player.getLevel() - 1]);
+                    player.setDefense(player.defense + 0.075*player.defense);
+                    player.setAttack(player.attack + 0.075*player.attack);
+                }
+            }
+        }
+        player.die = () =>{
+            if (player.isDead()){
+                player.changeState("death");
+                player.setXp(0);
+            }
+        }
+    
+
         player.move= () =>{
             let yMovement = 0;
             if(!player.death){
@@ -273,11 +346,6 @@ function createPlayer(scene){
                 if (!inputStates.up && !inputStates.down)
                     player.changeState("idle");
                     player.walk = false;
-
-                if (inputStates.o){
-                    player.death = true;
-                    player.changeState("death");
-                }
             }
         
         }   
@@ -293,8 +361,6 @@ function createPlayer(scene){
         let max = bbInfo.boundingBox.maximum;
         let min = bbInfo.boundingBox.minimum;
         
-        // Not perfect, but kinda of works...
-        // Looks like collisions are computed on a box that has half the size... ?
         bounderT.scaling.x = (max._x - min._x) * player.scaling.x*0.06;
         bounderT.scaling.y = (max._y - min._y) * player.scaling.y*0.12;
         bounderT.scaling.z = (max._z - min._z) * player.scaling.z*0.12;
