@@ -43,29 +43,6 @@ export default class Mob {
         }
     }
     
-    //pas sure qu'elle sert cette fonction
-    calculateBoundingBoxParameters() {
-        // Compute BoundingBoxInfo for the Mob, for this we visit all children meshes
-        let childrenMeshes = this.mobMeshes.getChildren();
-        let bbInfo = this.totalBoundingInfo(this.mobMeshes);
-        return bbInfo;
-    }
-
-    
-    totalBoundingInfo(meshes){
-        //ce console.log c'esr l'endroit exact où on peut trouver les boundinginfo qu'il faut
-        //console.log(this.mobMeshes._children[0]._children[0].getBoundingInfo())
-        var boundingInfo = meshes[0]._children[0]._children[0].getBoundingInfo();
-        meshes[0]._children[0]._children[0].showBoundingBox = true;
-        var min = boundingInfo.minimum.add(meshes[0].position);
-        var max = boundingInfo.maximum.add(meshes[0].position);
-        for(var i=1; i<meshes.length; i++){
-            boundingInfo = meshes[i]._children[0]._children[0].getBoundingInfo();
-            min = BABYLON.Vector3.Minimize(min, boundingInfo.minimum.add(meshes[i].position));
-            max = BABYLON.Vector3.Maximize(max, boundingInfo.maximum.add(meshes[i].position));
-        }
-        return new BABYLON.BoundingInfo(min, max);
-    }
     
     createBoundingBox() {
         let bounder = new BABYLON.Mesh.CreateBox("bounder", 1, this.scene);
