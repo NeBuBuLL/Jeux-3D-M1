@@ -37,10 +37,12 @@ function map(){
     scene = createScene();
     
     // Créons une sphère 
-    //var sphere = BABYLON.Mesh.CreateSphere("sphere1", 16, 2, scene);
+    var sphere = BABYLON.Mesh.CreateSphere("sphere1", 20, 20, scene);
 
     // Remontons le sur l'axe y de la moitié de sa hauteur
-    //sphere.position.y = 1;
+    sphere.position.y = 10;
+    sphere.position.x = 1500;
+    sphere.position.z = 1500;
 
     let cameraset  = false ;
 
@@ -66,15 +68,16 @@ function map(){
            
             player.move();
             checkCollisions(player, mobs);
+            checkCollisionsO(player, sphere);
         
             player.changeLevel();
             //crabe.Mob.attackPlayer(player);
             player.die();
-            console.log("xp : " + player.getXp() + " lvl : " + player.getLevel());
-            console.log("health : " + player.getHealth());
+            //console.log("xp : " + player.getXp() + " lvl : " + player.getLevel());
+            //console.log("health : " + player.getHealth());
 
-            crabe.Mob.dead(player);
-            player.attackMob(crabe, 10);
+            cactus.Mob.dead(player);
+            player.attackMob(cactus, 10);
             //update_level(level_of_player, player);
 
             //console.log(crabe.Mob.getLevel());
@@ -137,6 +140,7 @@ function createScene(){
    });
 
     createLights(scene);
+    createTree(scene, ground);
     createMobs(scene);
     
     createPlayer(scene);
@@ -476,14 +480,22 @@ function createMobs(scene){
         mobMaterial.diffuseTexture = new BABYLON.Texture("models/Persos/crabe_Texture.png");
         crabeM.scaling = new BABYLON.Vector3(20, 20, 20); 
         crabeM.name ="crabeM";
-        crabeM.position.x = 1000 + Math.random()*1000;
-        crabeM.position.z = 1000 + Math.random()*1000;
         crabeM.material = mobMaterial;
         
         let crabe = new Mob(crabeM,"crabe",3,3,20,5,250,scene);
+        crabeM.position.x = 1000 + Math.random()*1000;
+        crabeM.position.z = 1000 + Math.random()*1000;
         createBox(crabeM);
-        followGround(crabeM,2);
-    };
+
+        /*for (let i=0; i<5; i++){
+            var crabeClone = crabeM.clone("crabeM"+ i);
+            crabeClone.name = "crabeM"
+            crabeClone.position.x = 1000 + Math.random()*1000;
+            crabeClone.position.z = 1000 + Math.random()*1000;
+            createBox(crabeClone);
+        }
+        followGround(crabeClone,2);*/
+    }
    
     function onBatImported(meshes, particleSystems, skeletons) {  
         let batM = meshes[0];
@@ -651,7 +663,7 @@ function checkCollisions(meshes1, liste) {
                 new BABYLON.ExecuteCodeAction(
                 { trigger:BABYLON.ActionManager.OnIntersectionEnterTrigger, parameter:liste[a].bounder
                 }, 
-                function(){ console.log("Collisions");}
+                function(){ meshes1.takeDamage(50);}
             )
         )
     }
@@ -757,3 +769,36 @@ function update_health_bar(health_bar, playerMesh){
     level.innerHTML = "Level : " + playerMesh.getLevel();
 }
   */
+
+function createTree(scene,ground){
+    let meshTask = scene.assetManager.addMeshTask("Palmier task", "", "assets/Tree/palmier_test/", "palmier.babylon");
+
+    meshTask.onSuccess = function (task) {
+        onTreeImported(task.loadedMeshes, task.loadedParticleSystems, task.loadedSkeletons);
+    }
+
+    function onTreeImported(meshes, particleSystems, skeletons) {
+        let tree = meshes[0];
+        let treeMaterial = new BABYLON.StandardMaterial("treeTexture", scene);
+        treeMaterial.diffuseTexture = new BABYLON.Texture("assets/Tree/palmier_test/10446_Palm_Tree_v1_Diffuse.jpg");
+        tree.material = treeMaterial;
+
+        for (let i=0; i<5; i++){
+            var palmClone = tree.clone("tree" + i);
+            palmClone.position.x = 1000 + Math.random()*1000;
+            palmClone.position.z = 1000 + Math.random()*1000;
+            palmClone.position.y = 0;
+        }
+    }
+}
+
+function checkCollisionsO(meshes1, objet) {
+    meshes1.bounder.actionManager.registerAction(
+        
+            new BABYLON.ExecuteCodeAction(
+            { trigger:BABYLON.ActionManager.OnIntersectionEnterTrigger, parameter:objet
+            }, 
+            function(){ objet.isVisible = false;}
+        )
+    )
+}
