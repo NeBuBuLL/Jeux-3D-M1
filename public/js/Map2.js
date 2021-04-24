@@ -35,14 +35,19 @@ function map(){
     level_of_player = document.querySelector("#player_level");
     engine = new BABYLON.Engine(canvas, true);
     scene = createScene();
+
+    // enable physics
+    var gravityVector = new BABYLON.Vector3(0,-9.81, 0);
+    var physicsPlugin = new BABYLON.CannonJSPlugin();
+    scene.enablePhysics(gravityVector, physicsPlugin);
     
     // Créons une sphère 
-    var sphere = BABYLON.Mesh.CreateSphere("sphere1", 20, 20, scene);
+    //var sphere = BABYLON.Mesh.CreateSphere("sphere1", 20, 20, scene);
 
     // Remontons le sur l'axe y de la moitié de sa hauteur
-    sphere.position.y = 10;
+    /*sphere.position.y = 10;
     sphere.position.x = 1500;
-    sphere.position.z = 1500;
+    sphere.position.z = 1500;*/
 
     let cameraset  = false ;
 
@@ -68,7 +73,7 @@ function map(){
            
             player.move();
             checkCollisions(player, mobs);
-            checkCollisionsO(player, sphere);
+            //checkCollisionsO(player, sphere);
         
             player.changeLevel();
             //crabe.Mob.attackPlayer(player);
@@ -78,6 +83,7 @@ function map(){
 
             cactus.Mob.dead(player);
             player.attackMob(cactus, 10);
+            player.shoot();
             //update_level(level_of_player, player);
 
             //console.log(crabe.Mob.getLevel());
@@ -207,6 +213,10 @@ function createGround(scene, dimplan) {
     
     ground.material = groundMaterial;
     ground.checkCollisions = true;
+
+    // for physic engine
+    ground.physicsImpostor = new BABYLON.PhysicsImpostor(ground,
+        BABYLON.PhysicsImpostor.HeightmapImpostor, { mass: 0 }, scene);    
     return ground;
 }
 
@@ -436,8 +446,71 @@ function createPlayer(scene){
         bounderT.checkCollisions = true;
 
         player.bounder = bounderT
-    };
-        
+
+        player.canShoot = true;
+        player.shootAfter = 0.1; // in seconds
+
+        player.shoot = () => {
+            if(!inputStates.space) return;
+
+            if(!player.canShoot) return;
+    
+            // ok, we fire, let's put the above property to false
+            player.canShoot = false;
+    
+            // let's be able to fire again after a while
+            setTimeout(() => {
+                player.canShoot = true;
+            }, 1000 * player.shootAfter)
+    
+            // Create a canonball
+            let shoot = BABYLON.MeshBuilder.CreateSphere("shoot", {diameter: 15, segments: 32}, scene);
+            shoot.material = new BABYLON.StandardMaterial("Fire", scene);
+            shoot.material.diffuseTexture = new BABYLON.Texture("assets/coco.jpg", scene)
+    
+            let pos = player.position;
+            // position the cannonball above the tank
+            shoot.position = new BABYLON.Vector3(pos.x, pos.y+15, pos.z);
+            // move cannonBall position from above the center of the tank to above a bit further than the frontVector end (5 meter s further)
+            shoot.position.addInPlace(player.frontVector.multiplyByFloats(10, 10, 10));
+    
+            // add physics to the cannonball, mass must be non null to see gravity apply
+            shoot.physicsImpostor = new BABYLON.PhysicsImpostor(shoot,
+                BABYLON.PhysicsImpostor.SphereImpostor, { mass: 2 }, scene);    
+    
+            // the cannonball needs to be fired, so we need an impulse !
+            // we apply it to the center of the sphere
+            let powerOfFire = 400;
+            let azimuth = 0.2; 
+            let aimForceVector = new BABYLON.Vector3(player.frontVector.x*powerOfFire, (player.frontVector.y+azimuth)*powerOfFire,player.frontVector.z*powerOfFire);
+            
+            shoot.physicsImpostor.applyImpulse(aimForceVector,shoot.getAbsolutePosition());
+
+            setTimeout(() => {
+                shoot.dispose();
+            }, 3000)
+
+            const myParticleSystem = new BABYLON.ParticleSystem("particles", 2000, scene);
+            myParticleSystem.particleTexture = new BABYLON.Texture("assets/Particles/flare.png");
+
+            myParticleSystem.emitRate = 100;
+            myParticleSystem.direction1 = new BABYLON.Vector3(-2,Math.random()*3, Math.random());
+            myParticleSystem.direction2 = new BABYLON.Vector3(-2,-Math.random()*3, Math.random());
+
+            myParticleSystem.color1 = new BABYLON.Color3(0,128,0);
+
+            myParticleSystem.minEmitPower = 10;
+            myParticleSystem.maxEmitPower = 20;
+
+            // Size of each particle (random between...
+            myParticleSystem.minSize = 5;
+            myParticleSystem.maxSize = 10;
+
+            myParticleSystem.emitter = shoot;
+
+            myParticleSystem.start(); //Starts the emission of particles
+        }
+    };    
 }
 
 function createMobs(scene){  
@@ -493,8 +566,8 @@ function createMobs(scene){
             crabeClone.position.x = 1000 + Math.random()*1000;
             crabeClone.position.z = 1000 + Math.random()*1000;
             createBox(crabeClone);
-        }
-        followGround(crabeClone,2);*/
+        }*/
+        
     }
    
     function onBatImported(meshes, particleSystems, skeletons) {  
@@ -783,11 +856,11 @@ function createTree(scene,ground){
         treeMaterial.diffuseTexture = new BABYLON.Texture("assets/Tree/palmier_test/10446_Palm_Tree_v1_Diffuse.jpg");
         tree.material = treeMaterial;
 
-        for (let i=0; i<5; i++){
+        for (let i=0; i<30; i++){
             var palmClone = tree.clone("tree" + i);
-            palmClone.position.x = 1000 + Math.random()*1000;
-            palmClone.position.z = 1000 + Math.random()*1000;
-            palmClone.position.y = 0;
+            palmClone.position.x = -2000 + Math.random()*4000;
+            palmClone.position.z = -3000 + Math.random()*5000;
+            followGround(palmClone,50);
         }
     }
 }
