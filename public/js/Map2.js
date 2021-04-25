@@ -92,6 +92,7 @@ function map(){
             update_health_bar(health_bar, player);
             
             player.move();
+            player.checkBounderPosition();
             player.shoot();
             
             //console.log(player.getDefense());
@@ -467,6 +468,12 @@ function createPlayer(scene){
 
         player.bounder = bounderT
 
+        player.checkBounderPosition= () => {
+            if (Math.abs(player.bounder.position.x - player.position.x) >= 5 || Math.abs(player.bounder.position.z - player.position.z) >= 5){
+                player.bounder.position.x = player.position.x;
+                player.bounder.position.z = player.position.z;
+            }
+        }
         player.canShoot = true;
         player.shootAfter = 0.1; // in seconds
 
