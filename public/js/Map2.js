@@ -934,7 +934,7 @@ function addActionManagerC(mesh, ennemy) {
             function(){ 
                 console.log("SHOOOTTT !!!")
                 
-                if(ennemy.Mob.health > 0){
+                if(!ennemy.Mob.isDead()){
                     player.attackMob(ennemy);
                 }
                 else {
