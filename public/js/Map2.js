@@ -587,8 +587,9 @@ function createMobs(scene){
         let crabe = new Mob(crabeM,"crabe",3,3,20,5,250,scene);
         crabeM.position.x = 1000 + Math.random()*1000;
         crabeM.position.z = 1000 + Math.random()*1000;
-        createBox(crabeM);
-
+        crabeM.material = mobMaterial;
+        mobs.push(crabeM)
+        createBox(crabeM)
         cloneMobs(crabeM.name,crabeM,10,1000,1000,1000,1000);
         
     }
@@ -599,10 +600,10 @@ function createMobs(scene){
         mobMaterial.diffuseTexture = new BABYLON.Texture("models/Persos/bat_Texture.png");
         batM.scaling = new BABYLON.Vector3(20, 20, 20); 
         batM.name ="batM";
-        batM.position.x = 1000 + Math.random()*1000;
-        batM.position.z = 1000 + Math.random()*1000;
+        batM.position.x = -400 + Math.random()*1000;
+        batM.position.z = 2100 + Math.random()*700;
         batM.material = mobMaterial;
-
+        mobs.push(batM)
         let bat = new Mob(batM,"bat",2,3,20,5,250,scene);
 
         createBox(batM);
@@ -615,10 +616,10 @@ function createMobs(scene){
         mobMaterial.diffuseTexture = new BABYLON.Texture("models/Persos/cactus_Texture.png");
         cactusM.scaling = new BABYLON.Vector3(20, 20, 20); 
         cactusM.name ="cactusM";
-        cactusM.position.x = 1000 + Math.random()*1000;
-        cactusM.position.z = 1000 + Math.random()*1000;
+        cactusM.position.x = -3200 + Math.random()*2200;
+        cactusM.position.z = -1500 + Math.random()*1400;
         cactusM.material = mobMaterial;
-
+        mobs.push(cactusM)
         let cactus = new Mob(cactusM,"cactus",2,3,20,5,250,scene);
 
         createBox(cactusM);
@@ -631,10 +632,10 @@ function createMobs(scene){
         mobMaterial.diffuseTexture = new BABYLON.Texture("models/Persos/chicken_Texture.png");
         chickenM.scaling = new BABYLON.Vector3(20, 20, 20); 
         chickenM.name ="chickenM";
-        chickenM.position.x = 1000 + Math.random()*1000;
-        chickenM.position.z = 1000 + Math.random()*1000;
+        chickenM.position.x = -1900 + Math.random()*900;
+        chickenM.position.z = 750 + Math.random()*2250;
         chickenM.material = mobMaterial;
-
+        mobs.push(chickenM)
         let chicken = new Mob(chickenM,"chicken",2,3,20,5,250,scene);
         createBox(chickenM)
         cloneMobs(chickenM.name,chickenM,10,-1900,-900,750,2250);
@@ -646,10 +647,10 @@ function createMobs(scene){
         mobMaterial.diffuseTexture = new BABYLON.Texture("models/Persos/demon_Texture.png");
         demonM.scaling = new BABYLON.Vector3(20, 20, 20); 
         demonM.name ="demonM";
-        demonM.position.x = 1000 + Math.random()*1000;
-        demonM.position.z = 1000 + Math.random()*1000;
+        demonM.position.x = -1900 + Math.random()*1800;
+        demonM.position.z = -3300 + Math.random()*1800;
         demonM.material = mobMaterial;
-
+        mobs.push(demonM)
         let demon = new Mob(demonM,"demon",2,3,20,5,250,scene);
         createBox(demonM);
         cloneMobs(demonM.name,demonM,10,-1900,1800,-3300,1800);
@@ -661,10 +662,10 @@ function createMobs(scene){
         mobMaterial.diffuseTexture = new BABYLON.Texture("models/Persos/monster_Texture.png");
         monsterM.scaling = new BABYLON.Vector3(20, 20, 20); 
         monsterM.name ="monsterM";
-        monsterM.position.x = 1000 + Math.random()*1000;
-        monsterM.position.z = 1000 + Math.random()*1000;
+        monsterM.position.x = 550 + Math.random()*1500;
+        monsterM.position.z = -3300 + Math.random()*900;
         monsterM.material = mobMaterial;
-
+        mobs.push(monsterM)
         let monster = new Mob(monsterM,"monster",2,3,20,5,250,scene);
         createBox(monsterM);
         cloneMobs(monsterM.name,monsterM,10,550,1500,-3300,900);
@@ -676,10 +677,10 @@ function createMobs(scene){
         mobMaterial.diffuseTexture = new BABYLON.Texture("models/Persos/tree_Texture.png");
         treeM.scaling =new BABYLON.Vector3(20, 20, 20); 
         treeM.name ="treeM";
-        treeM.position.x = 1000 + Math.random()*1000;
-        treeM.position.z = 1000 + Math.random()*1000;
+        treeM.position.x = 2000 + Math.random()*600;
+        treeM.position.z = -2100 + Math.random()*2900;
         treeM.material = mobMaterial;
-
+        mobs.push(treeM)
         let tree = new Mob(treeM,"tree",2,3,20,5,250,scene);
         createBox(treeM);
         cloneMobs(treeM.name,treeM,10,2000,600,-2100,2900);
