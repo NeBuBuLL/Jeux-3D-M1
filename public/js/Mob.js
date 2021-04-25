@@ -11,6 +11,9 @@ export default class Mob {
         mobMeshes.Mob = this;
     }
 
+    isDead = () =>{
+        return this.health <= 0;
+    }
     getLevel(){
         return this.level;
     }
@@ -22,7 +25,7 @@ export default class Mob {
     }
 
     takeDamage(damage){
-        if (this.health > 0){
+        if (!this.isDead()){
             this.health -= damage;
         }
     }
@@ -38,7 +41,7 @@ export default class Mob {
     }
 
     dead(playerMesh){
-        if (this.health <= 0){
+        if (this.isDead()){
             this.giveXp(playerMesh);
         }
     }
