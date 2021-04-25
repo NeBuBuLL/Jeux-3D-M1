@@ -92,8 +92,9 @@ function map(){
             update_health_bar(health_bar, player);
             
             player.move();
+            player.shoot();
             
-            console.log(player.getDefense());
+            //console.log(player.getDefense());
         
             player.changeLevel();
             //crabe.Mob.attackPlayer(player);
@@ -466,8 +467,6 @@ function createPlayer(scene){
 
         player.bounder = bounderT
 
-        main_player = player;
-
         player.canShoot = true;
         player.shootAfter = 0.1; // in seconds
 
@@ -487,7 +486,7 @@ function createPlayer(scene){
             // Create a canonball
             let shoot = BABYLON.MeshBuilder.CreateSphere("shoot", {diameter: 15, segments: 32}, scene);
             shoot.material = new BABYLON.StandardMaterial("Fire", scene);
-            shoot.material.diffuseTexture = new BABYLON.Texture("assets/coco.jpg", scene)
+            shoot.material.diffuseTexture = new BABYLON.Texture("assets/coco.jpg", scene);
     
             let pos = player.position;
             // position the cannonball above the tank
@@ -510,6 +509,8 @@ function createPlayer(scene){
             setTimeout(() => {
                 shoot.dispose();
             }, 3000)
+
+            checkCollisionsC(shoot,mobs);
 
             const myParticleSystem = new BABYLON.ParticleSystem("particles", 2000, scene);
             myParticleSystem.particleTexture = new BABYLON.Texture("assets/Particles/flare.png");
@@ -864,8 +865,6 @@ function update_health_bar(health_bar, playerMesh){
     health_bar.innerHTML = playerMesh.getHealth();
 }
 
-
-
 /* function update_level(level, playerMesh){
     // <progress id="health" value="100" max="100"></progress>
     level.innerHTML = "Level : " + playerMesh.getLevel();
@@ -914,4 +913,39 @@ function cloneMobs(name,mesh,nombre,minX,maxX,minZ,maxZ){
         createBox(cloneM);
         mobs.push(cloneM);
     }
+}
+
+function checkCollisionsC(meshes1, liste) {
+    meshes1.actionManager = new BABYLON.ActionManager(scene);    
+    for (var a=0;a<liste.length;a++){
+        let ennemy = liste[a];
+        addActionManagerC(meshes1, ennemy);
+    }
+}
+
+function addActionManagerC(mesh, ennemy) {
+    let ennemyBBox = ennemy.bounder;
+    mesh.actionManager.registerAction(
+        new BABYLON.ExecuteCodeAction(
+            { 
+                trigger:BABYLON.ActionManager.OnIntersectionEnterTrigger, 
+                parameter: ennemyBBox
+            }, 
+            function(){ 
+                console.log("SHOOOTTT !!!")
+                
+                if(ennemy.Mob.health > 0){
+                    player.attackMob(ennemy);
+                }
+                else {
+                    ennemy.Mob.dead(player);
+                    ennemy.dispose();
+                    ennemyBBox.dispose();
+                    ennemyBBox.checkCollisions = false;
+                    console.log(ennemyBBox);
+                }
+                
+            }
+        )
+    );
 }
