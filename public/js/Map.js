@@ -11,8 +11,8 @@ let demon;
 
 
 let canvas;
-let health_progress;
 let health_bar;
+let xp_bar;
 let level_of_player;
 let engine;
 let scene;
@@ -30,9 +30,10 @@ function map(){
     canvas = document.querySelector("#renderCanvas");
     
     create_Player_UI();
-    health_progress = document.querySelector("#health_progress");
+    create_Player_XP_UI();
+    
     health_bar = document.querySelector("#health_bar");
-
+    xp_bar = document.querySelector("#xp_bar");
     level_of_player = document.querySelector("#player_level");
     engine = new BABYLON.Engine(canvas, true);
     scene = createScene();
@@ -42,12 +43,6 @@ function map(){
     var physicsPlugin = new BABYLON.CannonJSPlugin();
     scene.enablePhysics(gravityVector, physicsPlugin);
     
-    
-    // Créons une sphère 
-    //var sphere = BABYLON.Mesh.CreateSphere("sphere1", 16, 2, scene);
-
-    // Remontons le sur l'axe y de la moitié de sa hauteur
-    //sphere.position.y = 1;
 
     let cameraset  = false;
     let checkC = true;
@@ -79,10 +74,14 @@ function map(){
                 cameraset = true;
             }
             
+            //console.log(player.position);
+            
             update_health_bar(health_bar, player);
             update_level(level_of_player, player);
+            update_xp_bar(xp_bar, player);
 
             player.move();
+            player.checkBounderPosition();
             //console.log(player.getDefense());
             player.shoot();
             player.changeLevel();
@@ -90,10 +89,13 @@ function map(){
             //console.log("xp : " + player.getXp() + " lvl : " + player.getLevel());
             //console.log("health : " + player.getHealth());
 
-            crabe.Mob.dead(player);
-            player.attackMob(crabe, 10);
-            
+            if (player.getLevel() < 3){
+                crabe.Mob.takeDamage(100);
+            }
 
+            crabe.Mob.dead(player);
+            
+            
             //console.log(crabe.Mob.getLevel());
             //console.log(player.getHealth());
 
@@ -155,9 +157,12 @@ function createScene(){
    });
 
     createLights(scene);
+    createTree(scene);
     createMobs(scene);
     
     createPlayer(scene);
+
+    
     loadSounds(scene);
 
     return scene;  
@@ -266,9 +271,15 @@ function createPlayer(scene){
         player.death = false;
         player.walk = false;
         player.name = "Jolleen";
-        player.position.x = 1000 + Math.random()*1000;
-        player.position.z = 1000 + Math.random()*1000;
-        player.position.y = 0;
+        //Vector3 {_isDirty: false, _x: 151.51403794945372, _y: 161.05673460784308, _z: -947.673625129302}
+        /*   
+        player.position.x = 152;
+        player.position.z = -950;
+        player.position.y = 162;
+        */
+        player.position.x = 3200;
+        player.position.z = 3200;
+        player.position.y = 162;
         player.material = playerMaterial;
         
         //Player statistics
@@ -346,7 +357,11 @@ function createPlayer(scene){
             player.xp = xp;
         }
         player.addXp = (xp) =>{
-            player.xp +=xp; 
+            if(player.xp < level_xp[player.getLevel()-1])
+                player.xp +=xp; 
+            else
+                player.xp = level_xp[player.getLevel()-1];
+                
         }
         player.addLevel = () =>{
             player.level++;
@@ -435,7 +450,7 @@ function createPlayer(scene){
         let bounderMaterial = new BABYLON.StandardMaterial("bounderMaterial", scene);
         bounderMaterial.alpha = 0.4;
         bounderT.material = bounderMaterial;
-        
+
         bounderT.position = player.position.clone();
 
         let bbInfo = player.getBoundingInfo();
@@ -453,6 +468,13 @@ function createPlayer(scene){
 
         player.bounder = bounderT
 
+
+        player.checkBounderPosition= () => {
+            if (Math.abs(player.bounder.position.x - player.position.x) >= 5 || Math.abs(player.bounder.position.z - player.position.z) >= 5){
+                player.bounder.position.x = player.position.x;
+                player.bounder.position.z = player.position.z;
+            }
+        }
 
         player.canShoot = true;
         player.shootAfter = 0.1; // in seconds
@@ -530,6 +552,7 @@ function createMobs(scene){
     let meshTaskD = scene.assetManager.addMeshTask("Demon task", "", "models/Persos/", "demon.glb");
     let meshTaskM = scene.assetManager.addMeshTask("Monster task", "", "models/Persos/", "monster.glb");
     let meshTaskT = scene.assetManager.addMeshTask("Tree task", "", "models/Persos/", "tree.glb");
+    let meshTaskBoss = scene.assetManager.addMeshTask("Boss task", "", "models/Persos/", "monster.glb");
 
 
     meshTaskCr.onSuccess = function (task) {
@@ -553,6 +576,10 @@ function createMobs(scene){
     meshTaskT.onSuccess = function (task) {
         onTreeImported(task.loadedMeshes, task.loadedParticleSystems, task.loadedSkeletons);
     }
+    meshTaskBoss.onSuccess = function (task) {
+        onBossImported(task.loadedMeshes, task.loadedParticleSystems, task.loadedSkeletons);
+    }
+    
 
         
     function onCrabeImported(meshes, particleSystems, skeletons){  
@@ -565,9 +592,10 @@ function createMobs(scene){
         crabeM.position.z = 1000 + Math.random()*1000;
         crabeM.material = mobMaterial;
         
-        let crabe = new Mob(crabeM,"crabe",10,3,200,200,250,scene);
+        let crabe = new Mob(crabeM,"crabe",10,3,200,200,250,false,scene);
         createBox(crabeM);
-        followGround(crabeM,2);
+        cloneMobs(crabeM.name,crabeM,10,1000,1000,1000,1000);
+
     };
    
     function onBatImported(meshes, particleSystems, skeletons) {  
@@ -580,9 +608,10 @@ function createMobs(scene){
         batM.position.z = 1000 + Math.random()*1000;
         batM.material = mobMaterial;
 
-        let bat = new Mob(batM,"bat",2,3,20,5,250,scene);
+        let bat = new Mob(batM,"bat",2,3,20,5,250,false,scene);
         createBox(batM);
-        followGround(batM,2);
+        cloneMobs(batM.name,batM,10,-400,1000,2100,700);
+
     };
     
     function onCactusImported(meshes, particleSystems, skeletons) {  
@@ -595,9 +624,10 @@ function createMobs(scene){
         cactusM.position.z = 1000 + Math.random()*1000;
         cactusM.material = mobMaterial;
 
-        let cactus = new Mob(cactusM,"cactus",2,3,20,5,250,scene);
+        let cactus = new Mob(cactusM,"cactus",2,3,20,5,250,false,scene);
         createBox(cactusM);
-        followGround(cactusM,2);
+        cloneMobs(cactusM.name,cactusM,10, -3200,2200,-1500,1400);
+
     };
 
     function onChickenImported(meshes, particleSystems, skeletons) {  
@@ -610,10 +640,10 @@ function createMobs(scene){
         chickenM.position.z = 1000 + Math.random()*1000;
         chickenM.material = mobMaterial;
 
-        let chicken = new Mob(chickenM,"chicken",2,3,20,5,250,scene);
+        let chicken = new Mob(chickenM,"chicken",2,3,20,5,250,false,scene);
         createBox(chickenM)
-        followGround(chickenM,2);
-        mobs.push(chickenM);
+        cloneMobs(chickenM.name,chickenM,10,-1900,-900,750,2250);
+
     };
 
     function onDemonImported(meshes, particleSystems, skeletons) {  
@@ -626,9 +656,10 @@ function createMobs(scene){
         demonM.position.z = 1000 + Math.random()*1000;
         demonM.material = mobMaterial;
 
-        let demon = new Mob(demonM,"demon",2,3,20,5,250,scene);
+        let demon = new Mob(demonM,"demon",2,3,20,5,250,false,scene);
         createBox(demonM);
-        followGround(demonM,2);
+        cloneMobs(demonM.name,demonM,10,-1900,1800,-3300,1800);
+
     };
 
     function onMonsterImported(meshes, particleSystems, skeletons) {  
@@ -641,9 +672,10 @@ function createMobs(scene){
         monsterM.position.z = 1000 + Math.random()*1000;
         monsterM.material = mobMaterial;
 
-        let monster = new Mob(monsterM,"monster",2,3,20,5,250,scene);
+        let monster = new Mob(monsterM,"monster",2,3,20,5,250,false,scene);
         createBox(monsterM);
-        followGround(monsterM,2);
+        cloneMobs(monsterM.name,monsterM,10,550,1500,-3300,900);
+
     };
 
     function onTreeImported(meshes, particleSystems, skeletons) {  
@@ -656,10 +688,29 @@ function createMobs(scene){
         treeM.position.z = 1000 + Math.random()*1000;
         treeM.material = mobMaterial;
 
-        let tree = new Mob(treeM,"tree",2,3,20,5,250,scene);
+        let tree = new Mob(treeM,"tree",2,3,20,5,250,false,scene);
         createBox(treeM);
-        followGround(treeM,2);
+        cloneMobs(treeM.name,treeM,10,2000,600,-2100,2900);
     };
+
+    function onBossImported(meshes, particleSystems, skeletons) {  
+        let bossM = meshes[0];
+        let bossMaterial = new BABYLON.StandardMaterial("bossTexture", scene);
+        bossMaterial.diffuseTexture = new BABYLON.Texture("models/Persos/monster_Texture.png");
+        bossM.scaling = new BABYLON.Vector3(100, 100, 100); 
+        bossM.name ="monsterM";
+        bossM.position.x = 2745;
+        bossM.position.z = 3495;
+        bossM.material = bossMaterial;
+
+        let boss = new Mob(bossM,"monster",12,5,300,200,250,false,scene);
+        createBox(bossM);
+        mobs.push(bossM);
+    
+
+    };
+
+
 }
 
 function createFollowCamera(scene, target) {
@@ -848,8 +899,35 @@ function create_Player_UI(){
     document.body.appendChild(div_progress);
     document.body.appendChild(div_level);
 
-    
+}
 
+function create_Player_XP_UI(){
+    var div_progress_xp = document.createElement("div");
+    var div_bar_xp = document.createElement("div");
+
+    div_progress_xp.id = "xp_progress";
+    div_bar_xp.id = "xp_bar";
+
+    div_progress_xp.style.backgroundColor= "grey";
+    div_progress_xp.style.position = "absolute";
+    div_progress_xp.style.bottom = "0px";
+    div_progress_xp.style.left = "20%";
+    div_progress_xp.style.right = "20%";
+    div_progress_xp.style.width = "60%";
+    div_progress_xp.style.height = "30px";
+    div_progress_xp.style.border = "solid thin black";
+    
+    div_bar_xp.style.backgroundColor= "purple";
+    div_bar_xp.style.height = "100%";
+    div_bar_xp.style.width = "0%";
+
+    div_bar_xp.style.color=  "black";
+    div_bar_xp.style.fontWeight=  "bold";
+    div_bar_xp.style.textAlign=  "left"; /* To center it horizontally (if you want) */
+    div_bar_xp.style.lineHeight = "30px"; /* To center it vertically */
+    
+    div_progress_xp.appendChild(div_bar_xp);
+    document.body.appendChild(div_progress_xp);
 }
 
 function update_health_bar(health_bar, playerMesh){
@@ -868,8 +946,58 @@ function update_health_bar(health_bar, playerMesh){
     health_bar.innerHTML = playerMesh.getHealth();
 }
 
+function update_xp_bar(xp_bar, playerMesh){
+    let max_xp = level_xp[playerMesh.getLevel()-1];
+    let percent = playerMesh.getXp() / max_xp *100;
 
+    xp_bar.style.width = percent + "%";
+    xp_bar.innerHTML = playerMesh.getXp() + "/" + level_xp[playerMesh.getLevel()-1];
+}
 
 function update_level(level, playerMesh){
     level.innerHTML = "LEVEL " + playerMesh.getLevel();
+}
+
+function createTree(scene){
+    let meshTask = scene.assetManager.addMeshTask("Palmier task", "", "assets/Tree/palmier_test/", "palmier.babylon");
+
+    meshTask.onSuccess = function (task) {
+        onTreeImported(task.loadedMeshes, task.loadedParticleSystems, task.loadedSkeletons);
+    }
+
+    function onTreeImported(meshes, particleSystems, skeletons) {
+        let tree = meshes[0];
+        let treeMaterial = new BABYLON.StandardMaterial("treeTexture", scene);
+        treeMaterial.diffuseTexture = new BABYLON.Texture("assets/Tree/palmier_test/10446_Palm_Tree_v1_Diffuse.jpg");
+        tree.material = treeMaterial;
+
+        for (let i=0; i<30; i++){
+            var palmClone = tree.clone("tree" + i);
+            palmClone.position.x = -2000 + Math.random()*4000;
+            palmClone.position.z = -3000 + Math.random()*5000;
+            followGround(palmClone,50);
+        }
+    }
+}
+
+function checkCollisionsO(meshes1, objet) {
+    meshes1.bounder.actionManager.registerAction(
+        
+            new BABYLON.ExecuteCodeAction(
+            { trigger:BABYLON.ActionManager.OnIntersectionEnterTrigger, parameter:objet
+            }, 
+            function(){ objet.isVisible = false;}
+        )
+    )
+}
+
+function cloneMobs(name,mesh,nombre,minX,maxX,minZ,maxZ){
+    for (let i=0; i<nombre; i++){
+        var cloneM = mesh.clone(name + i);
+        cloneM.position.x = minX + Math.random()*maxX;
+        cloneM.position.z = minZ + Math.random()*maxZ;
+        let clone = new Mob(cloneM,name + "i",2,3,20,5,250,scene);
+        createBox(cloneM);
+        mobs.push(cloneM);
+    }
 }

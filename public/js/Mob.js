@@ -1,5 +1,5 @@
 export default class Mob {
-    constructor(mobMeshes,name,level,speed,attack,defense,health, scene) {
+    constructor(mobMeshes,name,level,speed,attack,defense,health, gaveXp, scene) {
         this.mobMeshes = mobMeshes;
         this.name = name;
         this.level = level;
@@ -7,7 +7,10 @@ export default class Mob {
         this.attack= attack;
         this.defense = defense;
         this.health = health;
+        this.gaveXp = gaveXp;
         this.scene = scene;
+
+        
         mobMeshes.Mob = this;
     }
 
@@ -25,24 +28,26 @@ export default class Mob {
     }
 
     takeDamage(damage){
-        if (!this.isDead()){
+        if (!this.isDead() && damage >0){
             this.health -= damage;
         }
     }
     giveXp(playerMesh){
-        //ne gagne plus d'xp si le joueur est plus haut niveau d'au moins 3 level
-        let diff_level = playerMesh.getLevel() - this.level;
-        if (diff_level < 3){
-            playerMesh.addXp(10 * (this.level - diff_level));
-        }
-        else if (diff_level >= 3){
-            playerMesh.addXp(0);
-        }
+            //ne gagne plus d'xp si le joueur est plus haut niveau d'au moins 3 level
+            let diff_level = playerMesh.getLevel() - this.level;
+            if (diff_level < 3){
+                playerMesh.addXp(10 * (this.level - diff_level));
+            }
+            else if (diff_level >= 3){
+                playerMesh.addXp(0);
+            }
     }
 
     dead(playerMesh){
-        if (this.isDead()){
+        
+        if (this.isDead() && !this.gaveXp){
             this.giveXp(playerMesh);
+            this.gaveXp =true;
         }
     }
     
