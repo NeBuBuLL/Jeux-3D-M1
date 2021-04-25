@@ -9,8 +9,6 @@ let monster;
 let tree;
 let demon;
 
-let checkC = true;
-
 
 let canvas;
 let health_progress;
@@ -27,26 +25,22 @@ let level_xp = [50, 100, 125, 175, 250, 325, 425, 550, 750, 1000];
 
 window.onload = map;
 
-/*function create_Player_UI(){
-    var div_progress = document.createElement("div");
-    var div_bar = document.createElement("div");
-    div_progress.id = "health_progress";
-    div_bar.id = "health_bar";
-    */
-
 function map(){
 
     canvas = document.querySelector("#renderCanvas");
-    
     
     create_Player_UI();
     health_progress = document.querySelector("#health_progress");
     health_bar = document.querySelector("#health_bar");
 
-
     level_of_player = document.querySelector("#player_level");
     engine = new BABYLON.Engine(canvas, true);
     scene = createScene();
+    
+    // enable physics
+    var gravityVector = new BABYLON.Vector3(0,-9.81, 0);
+    var physicsPlugin = new BABYLON.CannonJSPlugin();
+    scene.enablePhysics(gravityVector, physicsPlugin);
     
     
     // Créons une sphère 
@@ -55,7 +49,8 @@ function map(){
     // Remontons le sur l'axe y de la moitié de sa hauteur
     //sphere.position.y = 1;
 
-    let cameraset  = false ;
+    let cameraset  = false;
+    let checkC = true;
 
     scene.toRender = () => {
 
@@ -68,12 +63,9 @@ function map(){
         tree = scene.getMeshByName("treeM");
         demon = scene.getMeshByName("demonM");
         
-
         if (mobs.length == 0){
             mobs.push(crabe,cactus, chicken,bat,monster,tree,demon)
         }
-
-        
 
         if (player && crabe && cactus && chicken && bat && monster && tree && demon){
             if (checkC){ //Pour l'appeler que 1 fois
@@ -87,21 +79,20 @@ function map(){
                 cameraset = true;
             }
             
-            
             update_health_bar(health_bar, player);
-            
+            update_level(level_of_player, player);
+
             player.move();
-            console.log(player.getDefense());
-        
+            //console.log(player.getDefense());
+            player.shoot();
             player.changeLevel();
-            //crabe.Mob.attackPlayer(player);
             player.die();
             //console.log("xp : " + player.getXp() + " lvl : " + player.getLevel());
             //console.log("health : " + player.getHealth());
 
             crabe.Mob.dead(player);
             player.attackMob(crabe, 10);
-            //update_level(level_of_player, player);
+            
 
             //console.log(crabe.Mob.getLevel());
             //console.log(player.getHealth());
@@ -334,7 +325,10 @@ function createPlayer(scene){
             return player.health <= 0;
         }
         player.getHealth = () =>{
-            return player.health;
+            if (player.health >=0)
+                return player.health;
+            else
+                return 0;
         }
         player.getDefense= () =>{
             return player.defense;
@@ -459,10 +453,72 @@ function createPlayer(scene){
 
         player.bounder = bounderT
 
-        main_player = player;
+
+        player.canShoot = true;
+        player.shootAfter = 0.1; // in seconds
+
+        player.shoot = () => {
+            if(!inputStates.space) return;
+
+            if(!player.canShoot) return;
+    
+            // ok, we fire, let's put the above property to false
+            player.canShoot = false;
+    
+            // let's be able to fire again after a while
+            setTimeout(() => {
+                player.canShoot = true;
+            }, 1000 * player.shootAfter)
+    
+            // Create a canonball
+            let shoot = BABYLON.MeshBuilder.CreateSphere("shoot", {diameter: 15, segments: 32}, scene);
+            shoot.material = new BABYLON.StandardMaterial("Fire", scene);
+            shoot.material.diffuseTexture = new BABYLON.Texture("assets/coco.jpg", scene)
+    
+            let pos = player.position;
+            // position the cannonball above the tank
+            shoot.position = new BABYLON.Vector3(pos.x, pos.y+15, pos.z);
+            // move cannonBall position from above the center of the tank to above a bit further than the frontVector end (5 meter s further)
+            shoot.position.addInPlace(player.frontVector.multiplyByFloats(10, 10, 10));
+    
+            // add physics to the cannonball, mass must be non null to see gravity apply
+            shoot.physicsImpostor = new BABYLON.PhysicsImpostor(shoot,
+                BABYLON.PhysicsImpostor.SphereImpostor, { mass: 2 }, scene);    
+    
+            // the cannonball needs to be fired, so we need an impulse !
+            // we apply it to the center of the sphere
+            let powerOfFire = 400;
+            let azimuth = 0.2; 
+            let aimForceVector = new BABYLON.Vector3(player.frontVector.x*powerOfFire, (player.frontVector.y+azimuth)*powerOfFire,player.frontVector.z*powerOfFire);
+            
+            shoot.physicsImpostor.applyImpulse(aimForceVector,shoot.getAbsolutePosition());
+
+            setTimeout(() => {
+                shoot.dispose();
+            }, 3000)
+
+            const myParticleSystem = new BABYLON.ParticleSystem("particles", 2000, scene);
+            myParticleSystem.particleTexture = new BABYLON.Texture("assets/Particles/flare.png");
+
+            myParticleSystem.emitRate = 100;
+            myParticleSystem.direction1 = new BABYLON.Vector3(-2,Math.random()*3, Math.random());
+            myParticleSystem.direction2 = new BABYLON.Vector3(-2,-Math.random()*3, Math.random());
+
+            myParticleSystem.color1 = new BABYLON.Color3(0,128,0);
+
+            myParticleSystem.minEmitPower = 10;
+            myParticleSystem.maxEmitPower = 20;
+
+            // Size of each particle (random between...
+            myParticleSystem.minSize = 5;
+            myParticleSystem.maxSize = 10;
+
+            myParticleSystem.emitter = shoot;
+
+            myParticleSystem.start(); //Starts the emission of particles
+        }       
     };
 
-        
 }
 
 function createMobs(scene){  
@@ -477,8 +533,7 @@ function createMobs(scene){
 
 
     meshTaskCr.onSuccess = function (task) {
-        let crabe = onCrabeImported(task.loadedMeshes, task.loadedParticleSystems, task.loadedSkeletons);
-        mobs.push(crabe);
+        onCrabeImported(task.loadedMeshes, task.loadedParticleSystems, task.loadedSkeletons);
     }
     meshTaskB.onSuccess = function (task) {
         onBatImported(task.loadedMeshes, task.loadedParticleSystems, task.loadedSkeletons);
@@ -513,7 +568,6 @@ function createMobs(scene){
         let crabe = new Mob(crabeM,"crabe",10,3,200,200,250,scene);
         createBox(crabeM);
         followGround(crabeM,2);
-        return crabe;
     };
    
     function onBatImported(meshes, particleSystems, skeletons) {  
@@ -753,26 +807,48 @@ window.addEventListener('keyup', (event) => {
 function create_Player_UI(){
     var div_progress = document.createElement("div");
     var div_bar = document.createElement("div");
+    var div_level = document.createElement("div");
+    
     div_progress.id = "health_progress";
     div_bar.id = "health_bar";
-     
+    div_level.id = "player_level";
     
     div_progress.style.position = "absolute";
     div_progress.style.top = "10px";
     div_progress.style.left = "10px";
     div_progress.style.width = "500px";
     div_progress.style.height = "30px";
-
+    div_progress.style.border = "solid thin black";
+    
     div_bar.style.backgroundColor= "#4CAF50";
     div_bar.style.height = "100%";
     div_bar.style.color=  "black";
     div_bar.style.fontWeight=  "bold";
-
     div_bar.style.textAlign=  "left"; /* To center it horizontally (if you want) */
     div_bar.style.lineHeight = "30px"; /* To center it vertically */
+    
+
+    div_level.style.backgroundColor= "rgba(0,0,0,0.5)";
+    div_level.style.position = "absolute";
+    div_level.style.top = "41px";
+    div_level.style.left = "10px";
+    div_level.style.width = "100px";
+    div_level.style.height = "30px";
+
+    div_level.style.color=  "black";
+    div_level.style.fontWeight= "bold";
+    div_level.style.textAlign=  "center";
+    div_level.style.lineHeight = "30px"; /* To center it vertically */
+
+
+    div_level.innerHTML = "LEVEL 1";
 
     div_progress.appendChild(div_bar);
+
     document.body.appendChild(div_progress);
+    document.body.appendChild(div_level);
+
+    
 
 }
 
@@ -794,8 +870,6 @@ function update_health_bar(health_bar, playerMesh){
 
 
 
-/* function update_level(level, playerMesh){
-    // <progress id="health" value="100" max="100"></progress>
-    level.innerHTML = "Level : " + playerMesh.getLevel();
+function update_level(level, playerMesh){
+    level.innerHTML = "LEVEL " + playerMesh.getLevel();
 }
-  */
