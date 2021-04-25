@@ -18,7 +18,7 @@ export default class Mob {
         return this.defense;
     }
     attackPlayer(playerMesh){
-        playerMesh.takeDamage(this.attack - 0,25 * playerMesh.getDefense());
+        playerMesh.takeDamage(this.attack - playerMesh.getDefense());
     }
 
     takeDamage(damage){

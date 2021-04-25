@@ -1,5 +1,17 @@
 import Mob from "./Mob.js"
 
+let player;
+let crabe;
+let cactus;
+let chicken;
+let bat;
+let monster;
+let tree;
+let demon;
+
+let checkC = true;
+
+
 let canvas;
 let health_progress;
 let health_bar;
@@ -36,6 +48,7 @@ function map(){
     engine = new BABYLON.Engine(canvas, true);
     scene = createScene();
     
+    
     // Créons une sphère 
     //var sphere = BABYLON.Mesh.CreateSphere("sphere1", 16, 2, scene);
 
@@ -46,32 +59,45 @@ function map(){
 
     scene.toRender = () => {
 
-        let player = scene.getMeshByName("Jolleen");
-        let crabe = scene.getMeshByName("crabeM");
-        let cactus = scene.getMeshByName("cactusM");
-        let chicken = scene.getMeshByName("chickenM");
-        let bat = scene.getMeshByName("batM");
-        let monster = scene.getMeshByName("monsterM");
-        let tree = scene.getMeshByName("treeM");
-        let demon = scene.getMeshByName("demonM");
-        mobs.push(crabe,cactus, chicken,bat,monster,tree,demon)
+        player = scene.getMeshByName("Jolleen");
+        crabe = scene.getMeshByName("crabeM");
+        cactus = scene.getMeshByName("cactusM");
+        chicken = scene.getMeshByName("chickenM");
+        bat = scene.getMeshByName("batM");
+        monster = scene.getMeshByName("monsterM");
+        tree = scene.getMeshByName("treeM");
+        demon = scene.getMeshByName("demonM");
+        
+
+        if (mobs.length == 0){
+            mobs.push(crabe,cactus, chicken,bat,monster,tree,demon)
+        }
+
+        
 
         if (player && crabe && cactus && chicken && bat && monster && tree && demon){
+            if (checkC){ //Pour l'appeler que 1 fois
+                checkCollisions(player, mobs);
+                checkC = false;
+            }
             if (!cameraset){
+                player = player;
                 let followCamera = createFollowCamera(scene, player);
                 scene.activeCamera = followCamera;
                 cameraset = true;
             }
+            
+            
             update_health_bar(health_bar, player);
-           
+            
             player.move();
-            checkCollisions(player, mobs);
+            console.log(player.getDefense());
         
             player.changeLevel();
             //crabe.Mob.attackPlayer(player);
             player.die();
-            console.log("xp : " + player.getXp() + " lvl : " + player.getLevel());
-            console.log("health : " + player.getHealth());
+            //console.log("xp : " + player.getXp() + " lvl : " + player.getLevel());
+            //console.log("health : " + player.getHealth());
 
             crabe.Mob.dead(player);
             player.attackMob(crabe, 10);
@@ -85,6 +111,7 @@ function map(){
         scene.render();
     };
     scene.assetManager.load();
+
 
 };
 
@@ -178,7 +205,6 @@ function createLights(scene){
     var light = new BABYLON.HemisphericLight("light1", new BABYLON.Vector3(1, 1, 1), scene);
     light.specular = new BABYLON.Color3(0,0,0);
 }
-
 
 function createGround(scene, dimplan) {
     var assetsManager = scene.assetManager;
@@ -432,7 +458,10 @@ function createPlayer(scene){
         bounderT.checkCollisions = true;
 
         player.bounder = bounderT
+
+        main_player = player;
     };
+
         
 }
 
@@ -448,7 +477,8 @@ function createMobs(scene){
 
 
     meshTaskCr.onSuccess = function (task) {
-        onCrabeImported(task.loadedMeshes, task.loadedParticleSystems, task.loadedSkeletons);
+        let crabe = onCrabeImported(task.loadedMeshes, task.loadedParticleSystems, task.loadedSkeletons);
+        mobs.push(crabe);
     }
     meshTaskB.onSuccess = function (task) {
         onBatImported(task.loadedMeshes, task.loadedParticleSystems, task.loadedSkeletons);
@@ -480,9 +510,10 @@ function createMobs(scene){
         crabeM.position.z = 1000 + Math.random()*1000;
         crabeM.material = mobMaterial;
         
-        let crabe = new Mob(crabeM,"crabe",3,3,20,5,250,scene);
+        let crabe = new Mob(crabeM,"crabe",10,3,200,200,250,scene);
         createBox(crabeM);
         followGround(crabeM,2);
+        return crabe;
     };
    
     function onBatImported(meshes, particleSystems, skeletons) {  
@@ -528,6 +559,7 @@ function createMobs(scene){
         let chicken = new Mob(chickenM,"chicken",2,3,20,5,250,scene);
         createBox(chickenM)
         followGround(chickenM,2);
+        mobs.push(chickenM);
     };
 
     function onDemonImported(meshes, particleSystems, skeletons) {  
@@ -645,32 +677,28 @@ function createBox(meshes){
 
 
 function checkCollisions(meshes1, liste) {
-    
     meshes1.bounder.actionManager = new BABYLON.ActionManager(scene);    
-
-        var enemies_list = closure(liste);
-        for (var a=0;a<enemies_list.length;a++){
-            meshes1.bounder.actionManager.registerAction(
-                new BABYLON.ExecuteCodeAction(
-                { trigger:BABYLON.ActionManager.OnIntersectionEnterTrigger, parameter:enemies_list[a].bounder
-                }, 
-                function(){ enemies_list[a].Mob.getLevel();}// On veut afficher dans la console le niveau du Mob avec lequel on fait la collision pour tester si ça marche
-                                                            // plus tard, on utilisera la fonction 'mobMesh'.Mob.attackPlayer(meshes1);
-            )
-        )
+    for (var a=0;a<liste.length;a++){
+        let ennemy = liste[a];
+        addActionManager(meshes1, ennemy);
     }
-function closure(liste){
-    var enemies = [];
-    for (var i=0;i<liste.length;i++){
-        enemies[i] = (function(a){
-            return function(){
-                return a;
-            }
-        })(liste[i]);
-    }
-    return enemies;
 }
 
+function addActionManager(mesh, ennemy) {
+    let ennemyBBox = ennemy.bounder;
+    mesh.bounder.actionManager.registerAction(
+        new BABYLON.ExecuteCodeAction(
+            { 
+                trigger:BABYLON.ActionManager.OnIntersectionEnterTrigger, 
+                parameter: ennemyBBox
+            }, 
+            function(){ 
+                console.log("COLLISION !!!")
+                ennemy.Mob.attackPlayer(mesh);
+            }
+        )
+    );
+}
 window.addEventListener("resize", () => {
     engine.resize()
 });
