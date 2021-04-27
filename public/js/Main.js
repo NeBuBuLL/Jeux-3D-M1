@@ -12,6 +12,7 @@ let scene;
 let dimPlan = 8000;
 let inputStates = {};
 let mobs = [];
+let shoots = [];
 let checkC = true;
 
 let life_by_level = [500, 550, 600, 650,700, 750, 800, 850, 1000]; 
@@ -48,7 +49,6 @@ function map(){
 
         if (player && boss){
             if (checkC){ //Pour l'appeler que 1 fois
-                console.log(checkC)
                 checkCollisions(player, mobs);
                 checkC = false;
             }
@@ -761,6 +761,7 @@ function createMobs(scene){
             let aimForceVector4 = new BABYLON.Vector3(bossM.frontVector4.x*powerOfFire, (bossM.frontVector4.y+azimuth)*powerOfFire,bossM.frontVector4.z*powerOfFire);
             shoot4.physicsImpostor.applyImpulse(aimForceVector4,shoot4.getAbsolutePosition());
 
+            shoots.push(shoot1,shoot2,shoot3,shoot4);
             setTimeout(() => {
                 shoot1.dispose();
                 shoot2.dispose();
@@ -768,7 +769,7 @@ function createMobs(scene){
                 shoot4.dispose();
             }, 3000)
 
-            //checkCollisionsC(shoot,joueur);
+            checkCollisionsBP(bossM, shoots,joueur); 
         }
     };
 
@@ -1103,6 +1104,29 @@ function showStats(mesh){
     if (inputStates.i){
         mesh.getStats();
     }
+}
+
+function checkCollisionsBP(mesh, liste,joueur) {
+    //joueur.bounder.actionManager = new BABYLON.ActionManager(scene);    
+    for (var a=0;a<liste.length;a++){
+        let ball = liste[a];
+        addActionManagerBP(mesh,ball,joueur);
+    }
+}
+
+function addActionManagerBP(mesh, ball,joueur) {
+    ball.actionManager = new BABYLON.ActionManager(scene);
+    ball.actionManager.registerAction(
+        new BABYLON.ExecuteCodeAction(
+            { 
+                trigger:BABYLON.ActionManager.OnIntersectionEnterTrigger, 
+                parameter: joueur.bounder
+            }, 
+            function(){ 
+                mesh.Mob.attackPlayer(joueur)
+            }
+        )
+    );
 }
 
 function moveM(meshe,target) {
