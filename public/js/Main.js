@@ -39,7 +39,6 @@ function map(){
     var physicsPlugin = new BABYLON.CannonJSPlugin();
     scene.enablePhysics(gravityVector, physicsPlugin);
     
-
     let cameraset  = false ;
 
     scene.toRender = () => {
@@ -50,6 +49,7 @@ function map(){
         if (player && boss){
             if (checkC){ //Pour l'appeler que 1 fois
                 checkCollisions(player, mobs);
+                //mobUI(mobs);
                 checkC = false;
             }
             if (!cameraset){
@@ -60,11 +60,9 @@ function map(){
             }
 
             showStats(player);
-
             update_health_bar(health_bar, player);
             update_level(level_of_player, player);
             update_xp_bar(xp_bar, player);
-            
             
             player.move();
             moveMob(player);
@@ -74,14 +72,6 @@ function map(){
         
             player.changeLevel();
             player.die();
-        
-            
-            //console.log("xp : " + player.getXp() + " lvl : " + player.getLevel());
-            //console.log("health : " + player.getHealth());
-
-           /* if (player.getLevel() < 3){
-                crabe.Mob.takeDamage(100);
-            }*/
         }
 
         scene.render();
@@ -347,7 +337,7 @@ function createPlayer(scene){
 
         player.drown = ()=>{
             if (player.position.y <= -88)
-                player.takeDamage(life_by_level[player.level] -1 / 25);
+                player.takeDamage(life_by_level[player.getLevel() -1] / 25);
         }
         player.getStats= () => {
             console.log("Current Level : " + player.level);
@@ -894,7 +884,7 @@ window.addEventListener('keydown', (event) => {
     } else if (event.key === "Shift") {
         inputStates.shift = true;
     } else if (event.key === "i") {
-        inputStates.i = true;
+        inputStates.o = true;
     }
 }, false);
 
@@ -913,7 +903,7 @@ window.addEventListener('keyup', (event) => {
     } else if (event.key === "Shift") {
         inputStates.shift = false;
     } else if (event.key === "i") {
-        inputStates.i = false;
+        inputStates.o = false;
     }
 }, false);
 
@@ -1102,7 +1092,7 @@ function addActionManagerC(mesh, ennemy,check) {
 }
 
 function showStats(mesh){
-    if (inputStates.i){
+    if (inputStates.o){
         mesh.getStats();
     }
 }
@@ -1135,3 +1125,20 @@ function moveMob(target){
         if(element) element.Mob.moveM(element,target);
     });
 }
+//affiche le niveau au dessus des mobs (bug à fix)
+function mobUI(mobs){
+    for(let i = 0; i < mobs.length; i++){
+        var advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
+        var label = new BABYLON.GUI.TextBlock();
+        label.text = "Lvl " + mobs[i].Mob.getLevel();
+        label.color = "rgb(0,0,0)";
+        label.fontSize = 10;
+        advancedTexture.addControl(label);
+        advancedTexture.isForeground = true;
+        label.linkWithMesh(mobs[i]);   
+        label.linkOffsetY = -50;
+    }
+
+}
+
+
