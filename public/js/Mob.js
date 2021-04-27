@@ -17,7 +17,6 @@ export default class Mob {
     isDead(){
         return (this.health <= 0);
     }
-
     getXpToGive(){
         return this.xp_to_give;
     }
@@ -51,10 +50,15 @@ export default class Mob {
     }
 
     takeDamage(damage){
-        console.log("You hit a " + this.name + " and make " + damage + "to it");
-        if (!this.isDead() && damage >0){
+        console.log("You hit a " + this.name + " and make " + damage + " to it");
+        
+        if (!this.isDead() && damage > 0 && (this.health - damage) >=0){
             this.health -= damage;
         }
+        else if (this.health - damage < 0){
+            this.health = 0;
+        }
+        console.log("It remains it " + this.health);
     }
 
     giveXp(playerMesh){
@@ -74,7 +78,14 @@ export default class Mob {
             console.log("You earned " + xp + " experience points");
     }
     
-    
+    getStats(){
+        console.log("Ennemy name is " + this.name);
+        console.log("Ennemy level is " + this.level);
+        console.log("Ennemy brut attack is " + this.attack);
+        console.log("Ennemy brut defense is " + this.defense);
+        console.log("Ennemy remaining health is " + this.health);
+    }
+
     createBoundingBox() {
         let bounder = new BABYLON.Mesh.CreateBox("bounder", 1, this.scene);
         let bounderMaterial = new BABYLON.StandardMaterial("bounderMaterial", this.scene);
