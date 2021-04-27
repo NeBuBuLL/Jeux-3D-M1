@@ -883,7 +883,7 @@ window.addEventListener('keydown', (event) => {
         inputStates.space = true;
     } else if (event.key === "Shift") {
         inputStates.shift = true;
-    } else if (event.key === "i") {
+    } else if (event.key === "o") {
         inputStates.o = true;
     }
 }, false);
