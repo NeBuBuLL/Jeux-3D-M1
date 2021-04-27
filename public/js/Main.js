@@ -958,7 +958,6 @@ function checkCollisionsO(meshes1, objet) {
 }
 
 function cloneMobs(name,mesh,nombre,minX,maxX,minZ,maxZ){
-    console.log("DEBUG IN");
     for (let i=0; i<nombre; i++){
         console.log();
         var cloneM = mesh.clone(name + i);

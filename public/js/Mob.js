@@ -12,7 +12,6 @@ export default class Mob {
 
         
         mobMeshes.Mob = this;
-        console.log(this);
     }
 
     isDead(){
@@ -63,7 +62,7 @@ export default class Mob {
             let diff_level = playerMesh.getLevel() - this.level;
             let xp;
             if (diff_level < 3){
-                xp = this.xp_to_give *(this.level - diff_level);
+                xp = Math.floor(this.xp_to_give + this.xp_to_give / 10*(this.level - diff_level));
             }
             else if (diff_level >= 3){
                 xp = 0;
