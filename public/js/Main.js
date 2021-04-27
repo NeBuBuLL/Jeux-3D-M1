@@ -45,7 +45,7 @@ function map(){
     scene.toRender = () => {
 
         player = scene.getMeshByName("Jolleen");
-        boss = scene.getMeshByName("bossM")
+        boss = scene.getMeshByName("bossM");
 
         if (player && boss){
             if (checkC){ //Pour l'appeler que 1 fois
@@ -67,6 +67,7 @@ function map(){
             
             
             player.move();
+            moveMob(player);
             player.checkBounderPosition();
             player.shoot();
             boss.shoot(player);
@@ -346,7 +347,7 @@ function createPlayer(scene){
 
         player.drown = ()=>{
             if (player.position.y <= -88)
-                player.takeDamage(life_by_level[player.level] / 25);
+                player.takeDamage(life_by_level[player.level] -1 / 25);
         }
         player.getStats= () => {
             console.log("Current Level : " + player.level);
@@ -455,7 +456,7 @@ function createPlayer(scene){
         bounderT.scaling.y = (max._y - min._y) * player.scaling.y*0.12;
         bounderT.scaling.z = (max._z - min._z) * player.scaling.z*0.12;
 
-        bounderT.isVisible = true;
+        bounderT.isVisible = false;
         bounderT.position.y += (max._y - min._y) * player.scaling.y/3;
         bounderT.checkCollisions = true;
 
@@ -583,7 +584,7 @@ function createMobs(scene){
         crabeM.name ="crabeM";
         crabeM.material = mobMaterial;
         
-        let crabe = new Mob(crabeM,"crabe",1,3,75,50,250,25,scene);
+        let crabe = new Mob(crabeM,"crabe",1,4,75,50,250,25,scene);
         
 
         crabeM.position.x = 1000 + Math.random()*1000;
@@ -605,7 +606,7 @@ function createMobs(scene){
         batM.position.z = 2100 + Math.random()*700;
         batM.material = mobMaterial;
         mobs.push(batM)
-        let bat = new Mob(batM,"bat",2,3,75,60,400,50,scene);
+        let bat = new Mob(batM,"bat",2,4,75,60,400,50,scene);
 
         createBox(batM);
         cloneMobs(batM.name,batM,15,-400,1000,2100,700);
@@ -621,7 +622,7 @@ function createMobs(scene){
         cactusM.position.z = -1500 + Math.random()*1400;
         cactusM.material = mobMaterial;
         mobs.push(cactusM)
-        let cactus = new Mob(cactusM,"cactus",3,3,200,75,150,75,scene);
+        let cactus = new Mob(cactusM,"cactus",3,4,200,75,150,75,scene);
 
         createBox(cactusM);
         cloneMobs(cactusM.name,cactusM,10, -3200,2200,-1500,1400);
@@ -637,7 +638,7 @@ function createMobs(scene){
         chickenM.position.z = 750 + Math.random()*2250;
         chickenM.material = mobMaterial;
         mobs.push(chickenM)
-        let chicken = new Mob(chickenM,"chicken",4,3,150,80,300,100,scene);
+        let chicken = new Mob(chickenM,"chicken",4,4,150,80,300,100,scene);
         createBox(chickenM)
         cloneMobs(chickenM.name,chickenM,20,-1900,-900,750,2250);
     };
@@ -652,7 +653,7 @@ function createMobs(scene){
         demonM.position.z = -3300 + Math.random()*1800;
         demonM.material = mobMaterial;
         mobs.push(demonM)
-        let demon = new Mob(demonM,"demon",7,3,250,250,1000,150,scene);
+        let demon = new Mob(demonM,"demon",7,4,250,250,1000,150,scene);
         createBox(demonM);
         cloneMobs(demonM.name,demonM,20,-1900,1800,-3300,1800);
     };
@@ -667,7 +668,7 @@ function createMobs(scene){
         monsterM.position.z = -3300 + Math.random()*900;
         monsterM.material = mobMaterial;
         mobs.push(monsterM)
-        let monster = new Mob(monsterM,"monster",7,3,100,280,250,175,scene);
+        let monster = new Mob(monsterM,"monster",7,4,100,280,250,175,scene);
         createBox(monsterM);
         cloneMobs(monsterM.name,monsterM,25,550,1500,-3300,900);
     };
@@ -682,7 +683,7 @@ function createMobs(scene){
         treeM.position.z = -2100 + Math.random()*2900;
         treeM.material = mobMaterial;
         mobs.push(treeM)
-        let tree = new Mob(treeM,"tree",8,3,200,180,4000,200, scene);
+        let tree = new Mob(treeM,"tree",8,4,200,180,4000,200, scene);
         createBox(treeM);
         cloneMobs(treeM.name,treeM,30,2000,600,-2100,2900);
     };
@@ -835,7 +836,7 @@ function createBox(meshes){
         bounder.scaling.y = (max._y - min._y) * meshes.scaling.y*0.12;
         bounder.scaling.z = (max._z - min._z) * meshes.scaling.z*0.12;
 
-        bounder.isVisible = true;
+        bounder.isVisible = false;
         bounder.position.y += (max._y - min._y) * meshes.scaling.y/3;
         meshes.bounder = bounder;
 
@@ -1129,40 +1130,8 @@ function addActionManagerBP(mesh, ball,joueur) {
     );
 }
 
-function moveM(meshe,target) {
-    // as move can be called even before the bbox is ready.
-    //if (!meshe.bounder) return;
-    // let's put the dude at the BBox position. in the rest of this
-    // method, we will not move the dude but the BBox instead
-    meshe.position = new BABYLON.Vector3(
-    meshe.bounder.position.x,
-    meshe.bounder.position.y,
-    meshe.bounder.position.z
-    );
-    // follow the tank
-    //let jolleen = scene.getMeshByName("Jolleen");
-    // let's compute the direction vector that goes from Dude to the tank
-    let direction = target.position.subtract(meshe.position);
-    let distance = direction.length(); // we take the vector that is not normalized, not the dir vector
-    //console.log(distance);
-    let dir = direction.normalize();
-    // angle between Dude and tank, to set the new rotation.y of the Dude so that he will look towards the tank
-    // make a drawing in the X/Z plan to uderstand....
-    let alpha = Math.atan2(-dir.x, -dir.z);
-    // If I uncomment this, there are collisions. This is strange ?
-    //this.bounder.rotation.y = alpha;
-
-    meshe.rotation.y = alpha;
-
-    // let make the Dude move towards the tank
-    // first let's move the bounding box mesh
-    if (distance > 30) {
-      //a.restart();
-      // Move the bounding box instead of the dude....
-      meshe.bounder.moveWithCollisions(
-        dir.multiplyByFloats(meshe.Mob.speed, meshe.Mob.speed, meshe.Mob.speed)
-      );
-    } else {
-      //a.pause();
-    }
+function moveMob(target){
+    mobs.forEach(element => {
+        if(element) element.Mob.moveM(element,target);
+    });
 }
