@@ -32,4 +32,4 @@ Morgane :
 
 - Création des monstres
 - Gestion des intéractions (joueur/monstres avec bounding box, collisions etc...)
-- Attaques du joueur    #Attaque du boss en cours..#
+- Attaques du joueur et du boss  ##attaque des monstres en cours...##
