@@ -373,7 +373,7 @@ function createPlayer(scene){
             }
         }
         player.attackMob = (mobMesh)=> {
-            mobMesh.Mob.takeDamage(player.attack - 0.25 * mobMesh.Mob.getDefense());
+            mobMesh.Mob.takeDamage(Math.floor(player.attack - (-player.attack/2 + Math.random() * player.attack) - 0.25 * mobMesh.Mob.getDefense()));
         }
 
         player.die = () => {
@@ -857,7 +857,7 @@ function addActionManager(mesh, ennemy) {
                 parameter: ennemyBBox
             }, 
             function(){ 
-                console.log("COLLISION !!!")
+                //console.log("COLLISION !!!")
                 ennemy.Mob.attackPlayer(mesh);
             }
         )
