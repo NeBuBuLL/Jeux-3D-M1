@@ -1,5 +1,5 @@
 export default class Mob {
-    constructor(mobMeshes,name,level,speed,attack,defense,health, gaveXp, scene) {
+    constructor(mobMeshes,name,level,speed,attack,defense,health, xp_to_give, scene) {
         this.mobMeshes = mobMeshes;
         this.name = name;
         this.level = level;
@@ -7,15 +7,29 @@ export default class Mob {
         this.attack= attack;
         this.defense = defense;
         this.health = health;
-        this.gaveXp = gaveXp;
+        this.xp_to_give = xp_to_give;
         this.scene = scene;
 
         
         mobMeshes.Mob = this;
+        console.log(this);
     }
 
-    isDead = () =>{
-        return this.health <= 0;
+    isDead(){
+        return (this.health <= 0);
+    }
+
+    getXpToGive(){
+        return this.xp_to_give;
+    }
+    getSpeed(){
+        return this.speed;
+    }
+    getHealth(){
+        return this.health;
+    }
+    getName(){
+        return this.speed;
     }
     getLevel(){
         return this.level;
@@ -23,32 +37,42 @@ export default class Mob {
     getDefense(){
         return this.defense;
     }
+    getAttack(){
+        return this.attack;
+    }
+
     attackPlayer(playerMesh){
-        playerMesh.takeDamage(this.attack - playerMesh.getDefense());
+
+        let damage = Math.max(0,Math.floor(this.attack - playerMesh.getDefense()/4));
+
+        console.log(this.attack);
+        console.log(playerMesh.getDefense());
+        console.log(this.name + " hits you and does " + damage + " damage to you");
+        playerMesh.takeDamage(damage);
     }
 
     takeDamage(damage){
+        console.log("You hit a " + this.name + " and make " + damage + "to it");
         if (!this.isDead() && damage >0){
             this.health -= damage;
         }
     }
+
     giveXp(playerMesh){
             //ne gagne plus d'xp si le joueur est plus haut niveau d'au moins 3 level
             let diff_level = playerMesh.getLevel() - this.level;
+            let xp;
             if (diff_level < 3){
-                playerMesh.addXp(10 * (this.level - diff_level));
+                xp = this.xp_to_give *(this.level - diff_level);
             }
             else if (diff_level >= 3){
-                playerMesh.addXp(0);
+                xp = 0;
             }
-    }
+            console.log(this);
 
-    dead(playerMesh){
-        
-        if (this.isDead() && !this.gaveXp){
-            this.giveXp(playerMesh);
-            this.gaveXp =true;
-        }
+            //console.log("DEBUG " + diff_level + " " + this.xp_give);
+            playerMesh.addXp(xp);
+            console.log("You earned " + xp + " experience points");
     }
     
     

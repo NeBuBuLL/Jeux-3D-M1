@@ -1,14 +1,6 @@
 import Mob from "./Mob.js"
 
 let player;
-let crabe;
-let cactus;
-let chicken;
-let bat;
-let monster;
-let tree;
-let demon;
-
 
 let canvas;
 let health_bar;
@@ -266,9 +258,9 @@ function createPlayer(scene){
         player.health = 500;
         player.level = 1;
         player.xp = 0;
-        player.attack = 25;
-        player.defense = 15;
-        player.speed = 2;
+        player.attack = 100;
+        player.defense = 100;
+        player.speed = 8;
         player.frontVector = new BABYLON.Vector3(0, 0, -1);
 
         let idleAnim = scene.beginWeightedAnimation(skeletons[0], 73, 195,1.0 ,true, 1);
@@ -352,10 +344,10 @@ function createPlayer(scene){
         }
 
         player.takeDamage = (damage) =>{
-            if(player.health >0)  
+            if(player.health >0 && damage >0)  
                 player.health -= damage;
             else 
-                player.health = 0;
+                player.health -= 0;
         }
         player.changeLevel = () =>{
             if (player.level < 10){
@@ -454,7 +446,7 @@ function createPlayer(scene){
             }
         }
         player.canShoot = true;
-        player.shootAfter = 0.1; // in seconds
+        player.shootAfter = 0.5; // in seconds
 
         player.shoot = () => {
             if(!inputStates.space) return;
@@ -567,7 +559,7 @@ function createMobs(scene){
         crabeM.name ="crabeM";
         crabeM.material = mobMaterial;
         
-        let crabe = new Mob(crabeM,"crabe",3,3,20,5,250,scene);
+        let crabe = new Mob(crabeM,"crabe",3,3,20,5,250,25,scene);
         crabeM.position.x = 1000 + Math.random()*1000;
         crabeM.position.z = 1000 + Math.random()*1000;
         crabeM.material = mobMaterial;
@@ -587,7 +579,7 @@ function createMobs(scene){
         batM.position.z = 2100 + Math.random()*700;
         batM.material = mobMaterial;
         mobs.push(batM)
-        let bat = new Mob(batM,"bat",2,3,20,5,250,scene);
+        let bat = new Mob(batM,"bat",4,3,20,5,250,50,scene);
 
         createBox(batM);
         cloneMobs(batM.name,batM,10,-400,1000,2100,700);
@@ -603,7 +595,7 @@ function createMobs(scene){
         cactusM.position.z = -1500 + Math.random()*1400;
         cactusM.material = mobMaterial;
         mobs.push(cactusM)
-        let cactus = new Mob(cactusM,"cactus",2,3,20,5,250,scene);
+        let cactus = new Mob(cactusM,"cactus",5,3,20,5,250,75,scene);
 
         createBox(cactusM);
         cloneMobs(cactusM.name,cactusM,10, -3200,2200,-1500,1400);
@@ -619,7 +611,7 @@ function createMobs(scene){
         chickenM.position.z = 750 + Math.random()*2250;
         chickenM.material = mobMaterial;
         mobs.push(chickenM)
-        let chicken = new Mob(chickenM,"chicken",2,3,20,5,250,scene);
+        let chicken = new Mob(chickenM,"chicken",7,3,20,5,250,100,scene);
         createBox(chickenM)
         cloneMobs(chickenM.name,chickenM,10,-1900,-900,750,2250);
     };
@@ -634,7 +626,7 @@ function createMobs(scene){
         demonM.position.z = -3300 + Math.random()*1800;
         demonM.material = mobMaterial;
         mobs.push(demonM)
-        let demon = new Mob(demonM,"demon",2,3,20,5,250,scene);
+        let demon = new Mob(demonM,"demon",8,3,20,5,250,150,scene);
         createBox(demonM);
         cloneMobs(demonM.name,demonM,10,-1900,1800,-3300,1800);
     };
@@ -649,7 +641,7 @@ function createMobs(scene){
         monsterM.position.z = -3300 + Math.random()*900;
         monsterM.material = mobMaterial;
         mobs.push(monsterM)
-        let monster = new Mob(monsterM,"monster",2,3,20,5,250,scene);
+        let monster = new Mob(monsterM,"monster",9,3,20,5,250,175,scene);
         createBox(monsterM);
         cloneMobs(monsterM.name,monsterM,10,550,1500,-3300,900);
     };
@@ -664,7 +656,7 @@ function createMobs(scene){
         treeM.position.z = -2100 + Math.random()*2900;
         treeM.material = mobMaterial;
         mobs.push(treeM)
-        let tree = new Mob(treeM,"tree",2,3,20,5,250,scene);
+        let tree = new Mob(treeM,"tree",10,3,20,5,250,200, scene);
         createBox(treeM);
         cloneMobs(treeM.name,treeM,10,2000,600,-2100,2900);
     };
@@ -679,7 +671,7 @@ function createMobs(scene){
         bossM.position.z = 3495;
         bossM.material = bossMaterial;
 
-        let boss = new Mob(bossM,"monster",12,5,300,200,250,false,scene);
+        let boss = new Mob(bossM,"monster",12,5,300,200,250,300,scene);
         createBox(bossM);
         mobs.push(bossM);
     };
@@ -966,11 +958,14 @@ function checkCollisionsO(meshes1, objet) {
 }
 
 function cloneMobs(name,mesh,nombre,minX,maxX,minZ,maxZ){
+    console.log("DEBUG IN");
     for (let i=0; i<nombre; i++){
+        console.log();
         var cloneM = mesh.clone(name + i);
         cloneM.position.x = minX + Math.random()*maxX;
         cloneM.position.z = minZ + Math.random()*maxZ;
-        let clone = new Mob(cloneM,name,2,3,20,5,250,scene);
+        
+        let clone = new Mob(cloneM,name,mesh.Mob.getLevel(),mesh.Mob.getSpeed(),mesh.Mob.getAttack(),mesh.Mob.getDefense(),mesh.Mob.getHealth(),mesh.Mob.getXpToGive(),scene);
         createBox(cloneM);
         mobs.push(cloneM);
     }
@@ -990,7 +985,7 @@ function addActionManagerC(mesh, ennemy) {
         new BABYLON.ExecuteCodeAction(
             { 
                 trigger:BABYLON.ActionManager.OnIntersectionEnterTrigger, 
-                parameter: ennemyBBox
+                parameter: ennemy.bounder
             }, 
             function(){ 
                 console.log("SHOOOTTT !!!")
@@ -999,10 +994,12 @@ function addActionManagerC(mesh, ennemy) {
                     player.attackMob(ennemy);
                 }
                 else {
-                    ennemy.Mob.dead(player);
+                    ennemy.Mob.giveXp(player);
+                    ennemy.bounder.checkCollisions = false;
+                    ennemyBBox.position.y = -150;
                     ennemy.dispose();
-                    ennemyBBox.dispose();
-                    ennemyBBox.checkCollisions = false;
+                    ennemy.bounder.dispose();
+                    
                     console.log(ennemyBBox);
                 }
                 
