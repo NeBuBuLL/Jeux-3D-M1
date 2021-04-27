@@ -1,6 +1,7 @@
 import Mob from "./Mob.js"
 
 let player;
+let boss;
 
 let canvas;
 let health_bar;
@@ -42,8 +43,9 @@ function map(){
     scene.toRender = () => {
 
         player = scene.getMeshByName("Jolleen");
+        boss = scene.getMeshByName("bossM")
 
-        if (player){
+        if (player && boss){
             if (checkC){ //Pour l'appeler que 1 fois
                 checkCollisions(player, mobs);
                 checkC = false;
@@ -61,6 +63,7 @@ function map(){
             player.move();
             player.checkBounderPosition();
             player.shoot();
+            boss.shoot(player);
         
             player.changeLevel();
             player.die();
@@ -511,6 +514,8 @@ function createPlayer(scene){
             myParticleSystem.start(); //Starts the emission of particles
         }
     };    
+
+    return player;
 }
 
 function createMobs(scene){  
@@ -666,14 +671,83 @@ function createMobs(scene){
         let bossMaterial = new BABYLON.StandardMaterial("bossTexture", scene);
         bossMaterial.diffuseTexture = new BABYLON.Texture("models/Persos/monster_Texture.png");
         bossM.scaling = new BABYLON.Vector3(100, 100, 100); 
-        bossM.name ="monsterM";
+        bossM.name ="bossM";
         bossM.position.x = 2745;
         bossM.position.z = 3495;
         bossM.material = bossMaterial;
 
-        let boss = new Mob(bossM,"monster",12,5,300,200,250,300,scene);
+        let boss = new Mob(bossM,"boss",12,5,300,200,250,300,scene);
         createBox(bossM);
         mobs.push(bossM);
+
+        bossM.frontVector1 = new BABYLON.Vector3(0, 0, 1);
+        bossM.frontVector2 = new BABYLON.Vector3(0, 0, -1);
+        bossM.frontVector3 = new BABYLON.Vector3(1, 0, 0);
+        bossM.frontVector4 = new BABYLON.Vector3(-1, 0, 0);
+        bossM.canShoot = true;
+        bossM.shootAfter = 3; // in seconds
+
+        bossM.shoot = (joueur) => {
+
+            if(!bossM.canShoot) return;
+    
+            // ok, we fire, let's put the above property to false
+            bossM.canShoot = false;
+    
+            // let's be able to fire again after a while
+            setTimeout(() => {
+                bossM.canShoot = true;
+            }, 1000 * bossM.shootAfter)
+            let pos = bossM.position;
+            let powerOfFire = 400;
+            let azimuth = 0.2; 
+
+            // Create a 4 shoots
+            let shoot1 = BABYLON.MeshBuilder.CreateSphere("shoot", {diameter: 20, segments: 32}, scene);
+            shoot1.material = new BABYLON.StandardMaterial("Fire", scene);
+            shoot1.material.diffuseTexture = new BABYLON.Texture("assets/lave.jpg", scene);
+            shoot1.position = new BABYLON.Vector3(pos.x, pos.y+15, pos.z);
+            shoot1.position.addInPlace(bossM.frontVector1.multiplyByFloats(10, 10, 10));
+            shoot1.physicsImpostor = new BABYLON.PhysicsImpostor(shoot1,BABYLON.PhysicsImpostor.SphereImpostor, { mass: 2 }, scene);    
+            let aimForceVector1 = new BABYLON.Vector3(bossM.frontVector1.x*powerOfFire, (bossM.frontVector1.y+azimuth)*powerOfFire,bossM.frontVector1.z*powerOfFire);
+            shoot1.physicsImpostor.applyImpulse(aimForceVector1,shoot1.getAbsolutePosition());
+
+            let shoot2 = BABYLON.MeshBuilder.CreateSphere("shoot", {diameter: 20, segments: 32}, scene);
+            shoot2.material = new BABYLON.StandardMaterial("Fire", scene);
+            shoot2.material.diffuseTexture = new BABYLON.Texture("assets/lave.jpg", scene);
+            shoot2.position = new BABYLON.Vector3(pos.x, pos.y+15, pos.z);
+            shoot2.position.addInPlace(bossM.frontVector2.multiplyByFloats(10, 10, 10));
+            shoot2.physicsImpostor = new BABYLON.PhysicsImpostor(shoot2,BABYLON.PhysicsImpostor.SphereImpostor, { mass: 2 }, scene);    
+            let aimForceVector2 = new BABYLON.Vector3(bossM.frontVector2.x*powerOfFire, (bossM.frontVector2.y+azimuth)*powerOfFire,bossM.frontVector2.z*powerOfFire);
+            shoot2.physicsImpostor.applyImpulse(aimForceVector2,shoot2.getAbsolutePosition());
+
+            let shoot3 = BABYLON.MeshBuilder.CreateSphere("shoot", {diameter: 20, segments: 32}, scene);
+            shoot3.material = new BABYLON.StandardMaterial("Fire", scene);
+            shoot3.material.diffuseTexture = new BABYLON.Texture("assets/lave.jpg", scene);
+            shoot3.position = new BABYLON.Vector3(pos.x, pos.y+15, pos.z);
+            shoot3.position.addInPlace(bossM.frontVector3.multiplyByFloats(10, 10, 10));
+            shoot3.physicsImpostor = new BABYLON.PhysicsImpostor(shoot3,BABYLON.PhysicsImpostor.SphereImpostor, { mass: 2 }, scene);    
+            let aimForceVector3 = new BABYLON.Vector3(bossM.frontVector3.x*powerOfFire, (bossM.frontVector3.y+azimuth)*powerOfFire,bossM.frontVector3.z*powerOfFire);
+            shoot3.physicsImpostor.applyImpulse(aimForceVector3,shoot3.getAbsolutePosition());
+
+            let shoot4 = BABYLON.MeshBuilder.CreateSphere("shoot", {diameter: 20, segments: 32}, scene);
+            shoot4.material = new BABYLON.StandardMaterial("Fire", scene);
+            shoot4.material.diffuseTexture = new BABYLON.Texture("assets/lave.jpg", scene);
+            shoot4.position = new BABYLON.Vector3(pos.x, pos.y+15, pos.z);
+            shoot4.position.addInPlace(bossM.frontVector4.multiplyByFloats(10, 10, 10));
+            shoot4.physicsImpostor = new BABYLON.PhysicsImpostor(shoot4,BABYLON.PhysicsImpostor.SphereImpostor, { mass: 2 }, scene);    
+            let aimForceVector4 = new BABYLON.Vector3(bossM.frontVector4.x*powerOfFire, (bossM.frontVector4.y+azimuth)*powerOfFire,bossM.frontVector4.z*powerOfFire);
+            shoot4.physicsImpostor.applyImpulse(aimForceVector4,shoot4.getAbsolutePosition());
+
+            setTimeout(() => {
+                shoot1.dispose();
+                shoot2.dispose();
+                shoot3.dispose();
+                shoot4.dispose();
+            }, 3000)
+
+            //checkCollisionsC(shoot,joueur);
+        }
     };
 
     return mobs;
@@ -1005,4 +1079,42 @@ function addActionManagerC(mesh, ennemy) {
             }
         )
     );
+}
+
+function attackP(meshe,target) {
+    // as move can be called even before the bbox is ready.
+    //if (!meshe.bounder) return;
+    // let's put the dude at the BBox position. in the rest of this
+    // method, we will not move the dude but the BBox instead
+    meshe.position = new BABYLON.Vector3(
+    meshe.bounder.position.x,
+    meshe.bounder.position.y,
+    meshe.bounder.position.z
+    );
+    // follow the tank
+    //let jolleen = scene.getMeshByName("Jolleen");
+    // let's compute the direction vector that goes from Dude to the tank
+    let direction = target.position.subtract(meshe.position);
+    let distance = direction.length(); // we take the vector that is not normalized, not the dir vector
+    //console.log(distance);
+    let dir = direction.normalize();
+    // angle between Dude and tank, to set the new rotation.y of the Dude so that he will look towards the tank
+    // make a drawing in the X/Z plan to uderstand....
+    let alpha = Math.atan2(-dir.x, -dir.z);
+    // If I uncomment this, there are collisions. This is strange ?
+    //this.bounder.rotation.y = alpha;
+
+    meshe.rotation.y = alpha;
+
+    // let make the Dude move towards the tank
+    // first let's move the bounding box mesh
+    if (distance > 30) {
+      //a.restart();
+      // Move the bounding box instead of the dude....
+      meshe.bounder.moveWithCollisions(
+        dir.multiplyByFloats(meshe.Mob.speed, meshe.Mob.speed, meshe.Mob.speed)
+      );
+    } else {
+      //a.pause();
+    }
 }
