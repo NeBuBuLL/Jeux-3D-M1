@@ -22,14 +22,9 @@ Attention ! Chaque créature est unique avec une certaine force ou défense plus
 
 ## Contrtibutions
 
-Sébastien : 
+Nous nous sommes tout d'abord mis d'accord sur le jeu, les règles ainsi que son fonctionnement. Nous avons essayé de travailler en binôme, en communiquant pour chaque fonction que nous allons ajouter. Nous nous entraidons lorsqu'un de nous avait un problème sur son code. Donc nous avons eu une implication tout aussi importante pour ce projet.
+Nous pouvons quand même voir que le travail de chacun portait sur différents points du jeu.
 
-- Réalisation de la Map
-- Fonctions liées au fonctionnement du jeu (changement d'XP, de vie etc..)
-- Mise en place du joueur et du Boss
-      
-Morgane :
+Sébastien était concentré sur la Map, toutes les fonctions concernant le déroulement du jeu (XP, niveau,vie etc...) du côté du joueur et des monstres. Il a aussi mis en place le joueur (en utilisant blender et avoir des animations) et le boss du jeu.
 
-- Création des monstres
-- Gestion des intéractions (joueur/monstres avec bounding box, collisions etc...)
-- Attaques du joueur et du boss  ##attaque des monstres en cours...##
+Morgane s'est concentré sur la mise en place de monstres et de leurs actions. Elle s'est occupé des fonctions concernant les interactions entre joueur/monstre et joueur/boss (boundingbox, collision, projectiles etc...) ainsi que les attaques utilisées par les monstres (déplacement) et du boss (boule de lave).
