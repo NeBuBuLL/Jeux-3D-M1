@@ -688,7 +688,7 @@ function createMobs(scene){
         bossM.position.z = 3495;
         bossM.material = bossMaterial;
 
-        let boss = new Mob(bossM,"boss",12,5,350,400,8000,400,scene);
+        let boss = new Mob(bossM,"boss",12,5,350,400,8000,1000,scene);
 
         createBox(bossM);
         mobs.push(bossM);
