@@ -62,7 +62,7 @@ export default class Mob {
     }
 
     giveXp(playerMesh){
-        if (!this.isDead()){
+        //if (!this.isDead()){
             //ne gagne plus d'xp si le joueur est plus haut niveau d'au moins 3 level
             let diff_level = playerMesh.getLevel() - this.level;
             let xp;
@@ -77,7 +77,7 @@ export default class Mob {
             //console.log("DEBUG " + diff_level + " " + this.xp_give);
             playerMesh.addXp(xp);
             console.log("You earned " + xp + " experience points");
-    }
+    //}
 }
     
     getStats(){

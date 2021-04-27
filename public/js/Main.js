@@ -12,6 +12,7 @@ let scene;
 let dimPlan = 8000;
 let inputStates = {};
 let mobs = [];
+let checkC = true;
 
 let life_by_level = [500, 550, 600, 650,700, 750, 800, 850, 1000]; 
 let level_xp = [1000, 1300, 1650, 2450, 4575, 6700, 8500, 9000, 11250, 25000];
@@ -39,7 +40,6 @@ function map(){
     
 
     let cameraset  = false ;
-    let checkC = true;
 
     scene.toRender = () => {
 
@@ -48,6 +48,7 @@ function map(){
 
         if (player && boss){
             if (checkC){ //Pour l'appeler que 1 fois
+                console.log(checkC)
                 checkCollisions(player, mobs);
                 checkC = false;
             }
@@ -1054,7 +1055,6 @@ function checkCollisionsO(meshes1, objet) {
 
 function cloneMobs(name,mesh,nombre,minX,maxX,minZ,maxZ){
     for (let i=0; i<nombre; i++){
-        console.log();
         var cloneM = mesh.clone(name + i);
         cloneM.position.x = minX + Math.random()*maxX;
         cloneM.position.z = minZ + Math.random()*maxZ;
@@ -1069,11 +1069,11 @@ function checkCollisionsC(meshes1, liste) {
     meshes1.actionManager = new BABYLON.ActionManager(scene);    
     for (var a=0;a<liste.length;a++){
         let ennemy = liste[a];
-        addActionManagerC(meshes1, ennemy);
+        addActionManagerC(meshes1, ennemy,true);
     }
 }
 
-function addActionManagerC(mesh, ennemy) {
+function addActionManagerC(mesh, ennemy,check) {
     let ennemyBBox = ennemy.bounder;
     mesh.actionManager.registerAction(
         new BABYLON.ExecuteCodeAction(
@@ -1087,12 +1087,11 @@ function addActionManagerC(mesh, ennemy) {
                 }
                 else {
                     ennemy.Mob.giveXp(player);
-                    ennemy.bounder.checkCollisions = false;
-                    ennemyBBox.position.y = -150;
+                    const index = mobs.indexOf(ennemy)
+                    mobs.splice(index,1)
+                    checkC = check;
                     ennemy.dispose();
-                    ennemy.bounder.dispose();
-                    
-                    console.log(ennemyBBox);
+                    ennemyBBox.dispose();
                 }
                 
             }
@@ -1106,7 +1105,7 @@ function showStats(mesh){
     }
 }
 
-function attackP(meshe,target) {
+function moveM(meshe,target) {
     // as move can be called even before the bbox is ready.
     //if (!meshe.bounder) return;
     // let's put the dude at the BBox position. in the rest of this
