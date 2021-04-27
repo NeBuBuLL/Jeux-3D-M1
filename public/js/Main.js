@@ -177,7 +177,7 @@ function createGround(scene, dimplan) {
 
     const groundOptions = { width:dimplan, height:dimplan, subdivisions:500, minHeight:-100, maxHeight:250};
 
-    const ground = BABYLON.MeshBuilder.CreateGroundFromHeightMap("gdhm","images/hmap20.png",groundOptions, scene);
+    const ground = BABYLON.MeshBuilder.CreateGroundFromHeightMap("gdhm","images/hmap21.png",groundOptions, scene);
 
     var textureTask = assetsManager.addTextureTask("image task", "textures/test/lambert1_Base_Color.png");
     var textureTask2 = assetsManager.addTextureTask("image task2", "textures/test/heightmap_lambert1_Glossiness.png");
