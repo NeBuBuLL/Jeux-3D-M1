@@ -903,7 +903,7 @@ window.addEventListener('keyup', (event) => {
         inputStates.space = false;
     } else if (event.key === "Shift") {
         inputStates.shift = false;
-    } else if (event.key === "i") {
+    } else if (event.key === "o") {
         inputStates.o = false;
     }
 }, false);
