@@ -28,3 +28,11 @@ Nous pouvons quand même voir que le travail de chacun portait sur différents p
 Sébastien était concentré sur la Map, toutes les fonctions concernant le déroulement du jeu (XP, niveau,vie etc...) du côté du joueur et des monstres. Il a aussi mis en place le joueur (en utilisant blender et avoir des animations) et le boss du jeu.
 
 Morgane s'est concentré sur la mise en place de monstres et de leurs actions. Elle s'est occupé des fonctions concernant les interactions entre joueur/monstre et joueur/boss (boundingbox, collision, projectiles etc...) ainsi que les attaques utilisées par les monstres (déplacement) et du boss (boule de lave).
+
+## Heroku
+
+ Lien : [Heroku](https://little-rpg-babylon.herokuapp.com/)
+
+## Vidéo de présentation du jeu
+
+La vidéo de présentation se situe dans le fichier vidéo de ce repository
